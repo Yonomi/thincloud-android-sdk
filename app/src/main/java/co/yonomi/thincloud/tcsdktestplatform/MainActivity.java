@@ -16,10 +16,12 @@ import android.widget.Toast;
 
 import co.yonomi.thincloud.tcsdk.ThincloudConfig;
 import co.yonomi.thincloud.tcsdk.ThincloudSDK;
+import co.yonomi.thincloud.tcsdk.cq.CommandHandler;
 import co.yonomi.thincloud.tcsdk.thincloud.APISpec;
 import co.yonomi.thincloud.tcsdk.thincloud.TCAPIFuture;
 import co.yonomi.thincloud.tcsdk.thincloud.ThincloudAPI;
 import co.yonomi.thincloud.tcsdk.thincloud.exceptions.ThincloudException;
+import co.yonomi.thincloud.tcsdk.thincloud.models.Command;
 import co.yonomi.thincloud.tcsdk.thincloud.models.User;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -45,10 +47,19 @@ public class MainActivity extends AppCompatActivity {
         textUsername.setText(appConfig.get("thincloud.defaultTestUser", ""));
         textPassword.setText(appConfig.get("thincloud.defaultTestPass", ""));
 
-        // Configure dropdown
+        // Configure environment spinner
         ArrayAdapter<CharSequence> envArrayAdapter = ArrayAdapter.createFromResource(this, R.array.env_array, android.R.layout.simple_spinner_item);
         envArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         envSelector.setAdapter(envArrayAdapter);
+
+        final CommandHandler commandHandler = new CommandHandler() {
+            @Override
+            public void onEventReceived(Command command) {
+                Log.i("ICommandHandler", "Received command: " + command.commandId());
+            }
+        };
+
+        ThincloudSDK.setHandler(commandHandler);
 
         buttonLogin.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -75,7 +86,9 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     try {
                         if(!ThincloudSDK.isInitialized()) {
-                            ThincloudSDK.initialize(getApplicationContext(), config);
+                            ThincloudSDK
+                                    .initialize(getApplicationContext(), config);
+
                             Log.i(TAG, "SDK initialized");
                         } else {
                             Log.i(TAG, "SDK already initialized");
@@ -88,6 +101,7 @@ public class MainActivity extends AppCompatActivity {
                                     @Override
                                     public void onResponse(Call<User> call, Response<User> response) {
                                         Log.i(TAG, "Got user " + response.body().userId());
+                                        Toast.makeText(MainActivity.this, "User authenticated", Toast.LENGTH_SHORT).show();
                                     }
 
                                     @Override

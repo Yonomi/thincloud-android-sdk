@@ -16,6 +16,9 @@ import lombok.experimental.Accessors;
 @EqualsAndHashCode(callSuper = false)
 @Accessors(fluent = true)
 public class User extends BaseResponse {
+    /**
+     * Email
+     */
     private String email = null;
     @SerializedName("fullName") private String name = null;
     private Boolean active = null;

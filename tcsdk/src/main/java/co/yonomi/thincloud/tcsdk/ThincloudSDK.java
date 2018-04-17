@@ -42,6 +42,14 @@ public class ThincloudSDK {
     }
 
     /**
+     * Set event handler for incoming commands
+     * @param commandHandler
+     */
+    public static void setHandler(CommandHandler commandHandler) {
+        CommandQueue.getInstance().setHandler(commandHandler);
+    }
+
+    /**
      * Attempt to initialize the SDK
      * @param context Android application context used for initializing Firebase
      * @param config ThincloudConfig object
@@ -72,15 +80,8 @@ public class ThincloudSDK {
     private ThincloudSDK(){}
 
     /**
-     * Set event handler for incoming commands
-     * @param commandHandler
-     */
-    public void setHandler(CommandHandler commandHandler){
-        CommandQueue.getInstance().setHandler(commandHandler);
-    }
-
-    /**
-     * Attempt to register client token for push notifications
+     * Attempt to register client token for push notifications,
+     * do not call this method manually
      * @param token
      */
     public void reportToken(String token){
@@ -97,7 +98,7 @@ public class ThincloudSDK {
                     ).enqueue(new Callback<Client>() {
                         @Override
                         public void onResponse(Call<Client> call, Response<Client> response) {
-                            Log.i(TAG, "Client registered");
+                            Log.i(TAG, "Client registered with token " + token);
                         }
 
                         @Override

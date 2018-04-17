@@ -17,7 +17,7 @@ public abstract class CommandHandler {
      * Handle a Command
      * @param command
      */
-    abstract void onEventReceived(Command command);
+    public abstract void onEventReceived(Command command);
 
     public void onEventProcessed(Command command){
         CommandQueue.getInstance().handledCommand(command);

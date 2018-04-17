@@ -34,10 +34,18 @@ dependencies {
     compileOnly 'org.projectlombok:lombok:1.16.20'
     annotationProcessor 'org.projectlombok:lombok:1.16.20'
     api 'com.google.code.gson:gson:2.8.2'
-    api 'com.google.firebase:firebase-core:12.0.1'
-    api 'com.google.firebase:firebase-messaging:12.0.1'
+    api 'com.google.firebase:firebase-core:15.0.0'
+    api 'com.google.firebase:firebase-messaging:15.0.0'
     api 'com.firebase:firebase-jobdispatcher:0.8.5'
     api 'com.squareup.retrofit2:retrofit:2.4.0'
     api 'com.squareup.retrofit2:converter-gson:2.4.0'
     api 'net.sourceforge.streamsupport:android-retrofuture:1.6.1'
+}
+
+task javadoc(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    destinationDir = file("./javadoc/")
+    failOnError false
+    options.quiet()
 }

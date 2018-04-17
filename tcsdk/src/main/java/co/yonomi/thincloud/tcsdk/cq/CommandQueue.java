@@ -5,7 +5,7 @@ import android.util.Log;
 
 import com.firebase.jobdispatcher.JobParameters;
 import com.firebase.jobdispatcher.JobService;
-import com.google.firebase.messaging.RemoteMessage;
+import com.google.gson.Gson;
 
 import java.util.List;
 import java.util.Map;
@@ -29,6 +29,8 @@ public class CommandQueue {
 
     private static CommandQueue _instance = new CommandQueue();
 
+    private static final Gson gson = new Gson();
+
     public static CommandQueue getInstance(){
         return _instance;
     }
@@ -49,15 +51,14 @@ public class CommandQueue {
             throw new ThincloudException("Handler not defined");
         }
         else{
-            final RemoteMessage remoteMessage;
+            final Map<String,String> messageData;
             try{
-                remoteMessage = jobParameters.getExtras().getParcelable("remoteMessage");
+                messageData = gson.fromJson((String)jobParameters.getExtras().getSerializable("msgPayload"), Map.class);
             } catch(NullPointerException e){
-                Log.e(TAG, "Failed to parse remote message", e);
-                throw new ThincloudException("Failed to parse remote message");
+                Log.e(TAG, "Failed to parse payload", e);
+                throw new ThincloudException("Failed to parse payload");
             }
 
-            @NonNull Map<String,String> messageData = remoteMessage.getData();
             final String deviceId = messageData.get("deviceId");
             if(deviceId == null)
                 throw new ThincloudException("Cannot resolve commands for a null deviceId");

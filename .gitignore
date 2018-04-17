@@ -62,3 +62,7 @@ fastlane/Preview.html
 fastlane/screenshots
 fastlane/test_output
 fastlane/readme.md
+
+
+# Mac Stuff
+.DS_Store

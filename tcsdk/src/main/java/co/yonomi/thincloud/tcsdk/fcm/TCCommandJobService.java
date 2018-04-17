@@ -18,6 +18,7 @@ public class TCCommandJobService extends JobService {
 
     @Override
     public boolean onStartJob(JobParameters jobParameters){
+        Log.i(TAG, "Got remote message");
         try {
             CommandQueue.getInstance().handleCommand(this, jobParameters);
         }
