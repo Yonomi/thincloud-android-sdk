@@ -20,6 +20,8 @@ import co.yonomi.thincloud.tcsdk.cq.CommandHandler;
 import co.yonomi.thincloud.tcsdk.thincloud.APISpec;
 import co.yonomi.thincloud.tcsdk.thincloud.TCAPIFuture;
 import co.yonomi.thincloud.tcsdk.thincloud.ThincloudAPI;
+import co.yonomi.thincloud.tcsdk.thincloud.ThincloudRequest;
+import co.yonomi.thincloud.tcsdk.thincloud.ThincloudResponse;
 import co.yonomi.thincloud.tcsdk.thincloud.exceptions.ThincloudException;
 import co.yonomi.thincloud.tcsdk.thincloud.models.Command;
 import co.yonomi.thincloud.tcsdk.thincloud.models.User;
@@ -56,6 +58,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onEventReceived(Command command) {
                 Log.i("ICommandHandler", "Received command: " + command.commandId());
+                Toast.makeText(MainActivity.this, "Processing command: " + command.commandId(), Toast.LENGTH_SHORT).show();
+                Command response = command.respond();
+                response.state("completed");
+                onEventProcessed(response);
             }
         };
 
@@ -75,9 +81,8 @@ public class MainActivity extends AppCompatActivity {
                         .appVersion(getAppVersion())
                         .apiKey(appConfig.get("thincloud.apiKey"))
                         .clientId(appConfig.get("thincloud.clientId"))
-                        .company(appConfig.get("thincloud.company"))
+                        .instanceName(appConfig.get("thincloud.instanceName"))
                         .fcmTopic(appConfig.get("thincloud.fcmTopic"))
-                        .environment(envSelector.getSelectedItem().toString())
                         .username(textUsername.getText().toString())
                         .password(textPassword.getText().toString());
 
@@ -93,31 +98,28 @@ public class MainActivity extends AppCompatActivity {
                         } else {
                             Log.i(TAG, "SDK already initialized");
                         }
-                        ThincloudAPI.getInstance().spec(new TCAPIFuture() {
-                            @Override
-                            public boolean complete(APISpec spec) {
-                                Log.i(TAG, "Spec resolved");
-                                spec.getSelf().enqueue(new Callback<User>() {
-                                    @Override
-                                    public void onResponse(Call<User> call, Response<User> response) {
-                                        Log.i(TAG, "Got user " + response.body().userId());
-                                        Toast.makeText(MainActivity.this, "User authenticated", Toast.LENGTH_SHORT).show();
+                        APISpec apiSpec = ThincloudAPI.getInstance().getSpec();
+                        if(apiSpec != null){
+                            ThincloudResponse<User> handler = new ThincloudResponse<User>() {
+                                @Override
+                                public void handle(Call<User> call, Response<User> response, Throwable error) {
+                                    if(error != null){
+                                        Log.e(TAG, "Failed to get user", error);
+                                        Toast.makeText(MainActivity.this, "User failed to authenticate", Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        if(response.code() >= 400){
+                                            Log.e(TAG, "Failed to get user");
+                                        } else {
+                                            Log.i(TAG, "Got user " + response.body().userId());
+                                            Toast.makeText(MainActivity.this, "User authenticated", Toast.LENGTH_SHORT).show();
+                                        }
                                     }
-
-                                    @Override
-                                    public void onFailure(Call<User> call, Throwable t) {
-                                        Log.e(TAG, "Failed to get user", t);
-                                    }
-                                });
-                                return true;
-                            }
-
-                            @Override
-                            public boolean completeExceptionally(Throwable e){
-                                Log.e(TAG, "Failed to get spec for get user", e);
-                                return true;
-                            }
-                        });
+                                }
+                            };
+                            new ThincloudRequest<User>().create(apiSpec.getSelf(), handler);
+                        } else {
+                            Log.e(TAG, "Failed to get user, API not initialized.");
+                        }
                     } catch(ThincloudException e){
                         Log.e(TAG, "Failed to initialize SDK", e);
                         Toast.makeText(MainActivity.this, "SDK Init Failed", Toast.LENGTH_SHORT).show();
@@ -128,8 +130,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String getAppName(){
-        ApplicationInfo appInfo = getApplicationContext().getApplicationInfo();
-        return getApplicationContext().getString(appInfo.labelRes);
+//        ApplicationInfo appInfo = getApplicationContext().getApplicationInfo();
+//        return getApplicationContext().getString(appInfo.labelRes);
+        return getApplicationContext().getPackageName();
     }
 
     private String getAppVersion(){

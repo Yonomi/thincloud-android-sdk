@@ -3,13 +3,16 @@ package co.yonomi.thincloud.tcsdk.thincloud;
 import java.util.List;
 
 import co.yonomi.thincloud.tcsdk.thincloud.models.AccessToken;
+import co.yonomi.thincloud.tcsdk.thincloud.models.BaseResponse;
 import co.yonomi.thincloud.tcsdk.thincloud.models.Client;
 import co.yonomi.thincloud.tcsdk.thincloud.models.ClientRegistration;
 import co.yonomi.thincloud.tcsdk.thincloud.models.Command;
 import co.yonomi.thincloud.tcsdk.thincloud.models.Device;
 import co.yonomi.thincloud.tcsdk.thincloud.models.DeviceResponse;
+import co.yonomi.thincloud.tcsdk.thincloud.models.RefreshTokenRequest;
 import co.yonomi.thincloud.tcsdk.thincloud.models.TokenRequest;
 import co.yonomi.thincloud.tcsdk.thincloud.models.User;
+import co.yonomi.thincloud.tcsdk.thincloud.models.VerifyUser;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
@@ -23,6 +26,8 @@ import retrofit2.http.Path;
 
 public interface APISpec {
 
+    //region Authentication
+
     /**
      * Generate authentication tokens using a {@link TokenRequest}
      * @param tokenRequest
@@ -32,11 +37,41 @@ public interface APISpec {
     Call<AccessToken> getTokens(@Body TokenRequest tokenRequest);
 
     /**
+     * Generate new authentication tokens using a {@link RefreshTokenRequest}
+     * @param refreshTokenRequest
+     * @return
+     */
+    @POST("/v1/oauth/tokens")
+    Call<AccessToken> refreshToken(@Body RefreshTokenRequest refreshTokenRequest);
+
+    //endregion
+
+    //region User
+
+    @POST("/v1/users")
+    Call<User> createUser(@Body User user);
+
+    @POST("/v1/users/verification")
+    Call<BaseResponse> verifyUser(@Body VerifyUser verifyUser);
+
+    /**
      * Get the logged in {@link User}
      * @return
      */
     @GET("/v1/users/@me")
     Call<User> getSelf();
+
+    /**
+     * Get a {@link User} by {@link User#userId}
+     * @param userId
+     * @return
+     */
+    @GET("/v1/users/{userId}")
+    Call<User> getUser(@Path("userId") String userId);
+
+    //endregion
+
+    //region Devices
 
     /**
      * Get information about a {@link Device} by {@link Device#deviceId}
@@ -63,13 +98,9 @@ public interface APISpec {
     @PUT("/v1/devices/{deviceId}")
     Call<DeviceResponse> updateDevice(@Path("deviceId") String deviceId, @Body Device device);
 
-    /**
-     * Get a {@link User} by {@link User#userId}
-     * @param userId
-     * @return
-     */
-    @GET("/v1/users/{userId}")
-    Call<User> getUser(@Path("userId") String userId);
+    //endregion
+
+    //region Clients
 
     /**
      * Register a new {@link Client} using a {@link ClientRegistration} payload
@@ -78,6 +109,10 @@ public interface APISpec {
      */
     @POST("/v1/clients")
     Call<Client> registerClient(@Body ClientRegistration registration);
+
+    //endregion
+
+    //region Commands
 
     /**
      * Get a {@link List} of {@link Command}s associated with a {@link Device#deviceId}
@@ -95,5 +130,10 @@ public interface APISpec {
      * @return
      */
     @PUT("/v1/devices/{deviceId}/commands/{commandId}")
-    Call<Command> updateCommand(@Path("deviceId") String deviceId, @Path("commandId") String commandId, @Body Command command);
+    Call<Command> updateCommand(
+            @Path("deviceId") String deviceId,
+            @Path("commandId") String commandId,
+            @Body Command command);
+
+    //endregion
 }

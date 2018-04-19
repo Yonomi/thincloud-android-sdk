@@ -1,5 +1,7 @@
-apply plugin: 'com.android.library'
-
+plugins {
+//    id 'io.franzbecker.gradle-lombok' version '1.11'
+    id 'com.android.library'
+}
 
 android {
     compileSdkVersion 26
@@ -7,7 +9,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 26
         versionCode 1
-        versionName "1.0"
+        versionName "0.1"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -42,10 +44,25 @@ dependencies {
     api 'net.sourceforge.streamsupport:android-retrofuture:1.6.1'
 }
 
+//lombok {
+//    sha256 = ""
+//}
+//import io.franzbecker.gradle.lombok.task.DelombokTask
+//
+//
+//task delombok(type: DelombokTask) {
+//    ext.outputDir = file("$buildDir/delombok")
+//    outputs.dir(outputDir)
+//    android.sourceSets.main.java.srcDirs.each {
+//        inputs.dir(it)
+//        args(it, "-d", outputDir)
+//    }
+//}
+
 task javadoc(type: Javadoc) {
     source = android.sourceSets.main.java.srcDirs
+//    source = delombok.outputDir
     classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
     destinationDir = file("./javadoc/")
     failOnError false
-    options.quiet()
 }

@@ -16,11 +16,10 @@ import lombok.experimental.Accessors;
 @EqualsAndHashCode(callSuper = false)
 @Accessors(fluent = true)
 public class User extends BaseResponse {
-    /**
-     * Email
-     */
     private String email = null;
     @SerializedName("fullName") private String name = null;
+    private String firstName = null;
+    private String lastName = null;
     private Boolean active = null;
     private HashMap<String,String> custom = null;
     private String userId = null;

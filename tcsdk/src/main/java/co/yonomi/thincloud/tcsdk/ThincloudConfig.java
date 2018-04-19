@@ -12,8 +12,7 @@ import lombok.experimental.Accessors;
 public class ThincloudConfig {
     private String username = null;
     private String password = null;
-    private String environment = null;
-    private String company = null;
+    private String instanceName = null;
     private String appName = null;
     private String appVersion = null;
     private String apiKey = null;
@@ -25,14 +24,21 @@ public class ThincloudConfig {
      * @return true iff all values are not null
      */
     public boolean validate(){
-        return  username != null &&
-                password != null &&
-                environment != null &&
+        return
                 appName != null &&
                 appVersion != null &&
                 apiKey != null &&
-                company != null &&
+                instanceName != null &&
                 fcmTopic != null &&
                 clientId != null;
+    }
+
+
+    /**
+     * Validate whether user credentials are present
+     * @return
+     */
+    public boolean hasUserCredentials(){
+        return username != null && password != null;
     }
 }

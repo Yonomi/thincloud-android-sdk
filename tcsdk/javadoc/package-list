@@ -5,3 +5,4 @@ co.yonomi.thincloud.tcsdk.persist
 co.yonomi.thincloud.tcsdk.thincloud
 co.yonomi.thincloud.tcsdk.thincloud.exceptions
 co.yonomi.thincloud.tcsdk.thincloud.models
+co.yonomi.thincloud.tcsdk.util

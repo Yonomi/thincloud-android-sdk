@@ -24,4 +24,20 @@ public class Command extends BaseResponse {
     private JsonObject request;
     private JsonObject response;
     private Integer responseStatusCode;
+
+
+    /**
+     * Prepare a new {@link Command} instance stripped of unnecessary fields
+     * @return
+     */
+    public Command respond(){
+        return new Command()
+                .commandId(commandId())
+                .deviceId(deviceId())
+                .name(name())
+                .userId(userId())
+                .state(state())
+                .response(response())
+                .responseStatusCode(responseStatusCode());
+    }
 }

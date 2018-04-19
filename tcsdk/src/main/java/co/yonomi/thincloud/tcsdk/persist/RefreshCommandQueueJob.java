@@ -12,12 +12,13 @@ public class RefreshCommandQueueJob extends JobService {
 
     @Override
     public boolean onStartJob(JobParameters jobParameters){
-
+        // TODO: Implement auto-refresh
         return false;
     }
 
     @Override
     public boolean onStopJob(JobParameters jobParameters){
+        // TODO: Implement auto-refresh
         return false;
     }
 }

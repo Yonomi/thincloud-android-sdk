@@ -10,10 +10,10 @@ The project is ideally run through [Android Studio][androidStudio]. Please load 
 ## Projects
 
 
-#### [TCSDKTestPlatform](./app)
+#### [Demo App](./app)
 Located in `app/` directory, this contains a demo Android application which implements the ThincloudSDK
 
-#### [TCSDK](./tcsdk)
+#### [Library](./tcsdk)
 Located in `tcsdk/` directory, this contains an Android focused Thincloud set of integrations including Virtual Gateway. 
 
 

@@ -1,22 +1,23 @@
 package co.yonomi.thincloud.tcsdk.cq;
 
-import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.firebase.jobdispatcher.JobParameters;
 import com.firebase.jobdispatcher.JobService;
 import com.google.gson.Gson;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import co.yonomi.thincloud.tcsdk.thincloud.APISpec;
-import co.yonomi.thincloud.tcsdk.thincloud.TCAPIFuture;
+import co.yonomi.thincloud.tcsdk.thincloud.ThincloudRequest;
+import co.yonomi.thincloud.tcsdk.thincloud.ThincloudResponse;
 import co.yonomi.thincloud.tcsdk.thincloud.exceptions.ThincloudException;
 import co.yonomi.thincloud.tcsdk.thincloud.ThincloudAPI;
 import co.yonomi.thincloud.tcsdk.thincloud.models.Command;
+import co.yonomi.thincloud.tcsdk.util.AndThenDo;
 import retrofit2.Call;
-import retrofit2.Callback;
 import retrofit2.Response;
 
 /**
@@ -35,17 +36,41 @@ public class CommandQueue {
         return _instance;
     }
 
+    private GenericCommandHandler handler;
 
-    private CommandHandler handler;
+    private CommandQueue(){ }
 
-    private CommandQueue(){
-
-    }
-
-    public void setHandler(CommandHandler _handler){
+    /**
+     * Set event handler
+     * @param _handler
+     */
+    public void setHandler(GenericCommandHandler _handler){
         handler = _handler;
     }
 
+    /**
+     * Filter out commands who's {@link Command#state} does not equal state parameter
+     * @param commands
+     * @param state
+     * @return
+     */
+    public List<Command> filterCommandsByState(List<Command> commands, String state){
+        Iterator<Command> iterator = commands.iterator();
+        state = state.toUpperCase();
+        while(iterator.hasNext()){
+            Command command = iterator.next();
+//            if(!command.state().toUpperCase().equals(state))
+//                commands.remove(command);
+        }
+        return commands;
+    }
+
+    /**
+     * Handle a command from firebase JobService
+     * @param jobService
+     * @param jobParameters
+     * @throws ThincloudException
+     */
     public void handleCommand(final JobService jobService, final JobParameters jobParameters) throws ThincloudException {
         if(handler == null) {
             throw new ThincloudException("Handler not defined");
@@ -63,77 +88,114 @@ public class CommandQueue {
             if(deviceId == null)
                 throw new ThincloudException("Cannot resolve commands for a null deviceId");
 
-            ThincloudAPI.getInstance().spec(new TCAPIFuture() {
-                @Override
-                public boolean complete(APISpec spec) {
-                    spec.getCommands(deviceId).enqueue(new Callback<List<Command>>() {
-                        @Override
-                        public void onResponse(@NonNull Call<List<Command>> call, @NonNull Response<List<Command>> response) {
-                            List<Command> commands = response.body();
-                            if(commands != null) {
-                                for (Command command : commands) {
-                                    processCommand(command);
+            APISpec apiSpec = ThincloudAPI.getInstance().getSpec();
+            if(apiSpec != null){
+                ThincloudResponse<List<Command>> responseHandler = new ThincloudResponse<List<Command>>() {
+                    @Override
+                    public void handle(Call<List<Command>> call, Response<List<Command>> response, Throwable error) {
+                        if(error != null){
+                            Log.e(TAG, "Failed to fetch commands", error);
+                            jobService.jobFinished(jobParameters, false);
+                        } else {
+                            List<Command> rawCommands = response.body();
+                            if(rawCommands != null) {
+                                List<Command> commands = filterCommandsByState(rawCommands, "pending");
+                                if(handler instanceof CommandListHandler) {
+                                    acknowledgeCommands(commands, new AndThenDo() {
+                                        @Override
+                                        public void something() {
+                                            ((CommandListHandler) handler).onEventReceived(commands);
+                                        }
+                                    });
                                 }
+                                else if(handler instanceof CommandHandler) {
+                                    for (Command command : commands) {
+                                        acknowledgeCommand(command, new AndThenDo() {
+                                            @Override
+                                            public void something() {
+                                                ((CommandHandler)handler).onEventReceived(command);
+                                            }
+                                        });
+                                    }
+                                }
+                                else
+                                    Log.e(TAG, "Failed to handle command, unexpected handler implementation.");
                             }
                             jobService.jobFinished(jobParameters, false);
                         }
-
-                        @Override
-                        public void onFailure(Call<List<Command>> call, Throwable t) {
-                            Log.e(TAG, "Failed to fetch commands", t);
-                            jobService.jobFinished(jobParameters, false);
-                        }
-                    });
-                    return true;
-                }
-
-                @Override
-                public boolean completeExceptionally(Throwable e){
-                    Log.e(TAG, "Failed to get spec for getCommands", e);
-                    return true;
-                }
-            });
+                    }
+                };
+                new ThincloudRequest<List<Command>>().create(apiSpec.getCommands(deviceId), responseHandler);
+            } else {
+                Log.e(TAG, "Failed to fetch commands, API not initialized.");
+            }
         }
     }
 
-    public void processCommand(final Command command){
-        handler.onEventReceived(command);
-        try {
-            ThincloudAPI.getInstance().spec(new TCAPIFuture() {
-                @Override
-                public boolean complete(APISpec spec) {
-                    spec.updateCommand(
-                            command.deviceId(),
-                            command.commandId(),
-                            new Command()
-                                    .state("completed")
-                    ).enqueue(new Callback<Command>() {
-                        @Override
-                        public void onResponse(Call<Command> call, Response<Command> response) {
-                            Log.i(TAG, "Command update success");
-                        }
-
-                        @Override
-                        public void onFailure(Call<Command> call, Throwable t) {
-                            Log.e(TAG, "Command update failed", t);
-                        }
-                    });
-                    return true;
-                }
-
-                @Override
-                public boolean completeExceptionally(Throwable e){
-                    Log.e(TAG, "Failed to get spec for updateCommand", e);
-                    return true;
-                }
-            });
+    /**
+     * Update the state of the commands to ack
+     * @param commands
+     * @param andThenDo
+     */
+    private void acknowledgeCommands(final List<Command> commands, final AndThenDo andThenDo){
+        for (Command command : commands) {
+            acknowledgeCommand(command, null);
         }
-        catch(ThincloudException e){
-            Log.e(TAG, "Failed to update command in queue", e);
+        if(andThenDo != null)
+            andThenDo.something();
+    }
+
+    /**
+     * Update the state of the command to 'ACK'
+     * @param command
+     */
+    private void acknowledgeCommand(final Command command, final AndThenDo andThenDo){
+        APISpec apiSpec = ThincloudAPI.getInstance().getSpec();
+        if(apiSpec != null){
+            ThincloudResponse<Command> handler = new ThincloudResponse<Command>() {
+                @Override
+                public void handle(Call<Command> call, Response<Command> response, Throwable error) {
+                    if(error != null)
+                        Log.e(TAG, "Failed to handle command update", error);
+                    else {
+                        Log.i(TAG, "Command updated state=ack successfully");
+                    }
+                    if(andThenDo != null)
+                        andThenDo.something();
+                }
+            };
+            Call<Command> call = apiSpec.updateCommand(command.deviceId(), command.commandId(), new Command().state("ack"));
+            new ThincloudRequest<Command>().create(call, handler);
+        } else {
+            Log.e(TAG, "Failed to acknowledge command, API not initialized.");
         }
     }
 
+    /**
+     * Submit an update to the command object
+     * @param command
+     */
     public void handledCommand(Command command){
-
+        APISpec apiSpec = ThincloudAPI.getInstance().getSpec();
+        if(apiSpec != null){
+            ThincloudResponse<Command> handler = new ThincloudResponse<Command>() {
+                @Override
+                public void handle(Call<Command> call, Response<Command> response, Throwable error) {
+                    if(error != null){
+                        Log.e(TAG, "Failed to handle command", error);
+                    } else {
+                        if(response.code() >= 400){
+                            Log.e(TAG, "Failed to handle command, bad response code");
+                        } else {
+                            Log.i(TAG, "Command updated successfully");
+                        }
+                    }
+                }
+            };
+            Call<Command> call = apiSpec.updateCommand(command.deviceId(), command.commandId(), command);
+            new ThincloudRequest<Command>().create(call, handler);
+        } else {
+            Log.e(TAG, "Failed to handle command, API not initialized.");
+        }
     }
 }

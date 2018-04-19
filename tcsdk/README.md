@@ -6,6 +6,7 @@
 3. [Javadocs](#javadocs)
 
 
+
 ## Getting Started
 
 This SDK is used for interacting with Thincloud v1 as well as providing a Virtual Gateway implementation.
@@ -25,8 +26,8 @@ There are four primary components to be concerned with:
 
 1. [ThincloudConfig](#thincloudconfig)
 2. [ThincloudSDK](#thincloudSDK)
-3. [ThincloudAPI](#thincloudAPI)
-4. ThincloudException
+3. [CommandQueue](#commandQueue)
+4. [ThincloudAPI](#thincloudAPI)
 
 
 
@@ -57,40 +58,81 @@ Primary singleton interface for dealing with Thincloud. Ideally, this is all tha
 | ---- | ---- | ----- | ---- |
 | ThincloudSDK | *initialize* | Context, ThincloudConfig | Initializes the ThincloudSDK and ThincloudAPI. <br>*Requires Android Context to configure Firebase.* |
 | void | *setHandler* | CommandHandler | Provides an event handler to be called for each command that is sent. |
-| boolean | *isInitialized* |  | Determines if the SDK has been initialized yet |
+| boolean | *isInitialized* |  | Determines if the SDK has been initialized y et |
+
+
+### CommandQueue
+
+The CommandQueue implementation is used to coordinate for the Virtual Gateway. It is implemented as a singleton with it's instance methods listed below.
+
+| Method | Arguments | Usage |
+| --- | --- | --- |
+| setHandler | GenericCommandHandler | Assigns a handler. Can also be accessed statically via ThincloudSDK.setHandler |
+
+#### GenericCommandHandler\<T>
+
+The interface for handlers to implement. Includes a method `onEventReceived(T)`
+
+#### CommandHandler
+
+A GenericCommandHandler implementation to process a single command.
+
+`onEventReceived(Command)`
+
+#### CommandListHandler
+
+A GenericCommandHandler implementation to process a list of commands.
+
+`onEventReceived(List<Command>)`
 
 
 ### ThincloudAPI
 
 An API initializer and manager singleton. Receives a configuration object when the SDK is initialized. Uses [Retrofit](retrofit) behind the scenes for easy API management. Wraps all authentication handling to make interacting with the API easy. When run in an Android App, all API interaction should be called asynchronously to prevent network on the main thread.
 
+
+#### ThincloudRequest\<T>
+
+An API wrapper that passes all results to a single handler.
+
+| Method | Arguments | Usage |
+| ---- | ---- | --- |
+| new ThincloudRequest\<T> | | Initialize a new ThincloudRequest object |
+| create | Call\<T>, ThincloudResponse\<T> | Create a new request, checking auth state first |
+| createWithoutAuth | Call\<T>, ThincloudResponse\<T> | Create a new request, ignoring auth state |
+
+#### ThincloudResponse\<T>
+
+An abstract API response handler class with a single handler method.
+
+| Method | Arguments | Usage |
+| ---- | ---- | --- |
+| new ThincloudResponse\<T> | | Initialize a new ThincloudResponse object |
+| handle | Call\<T>, Response\<T>, Throwable | The all purpose response handler |
+
+
 #### API Interaction Sample
 
 ```java
-try {
-    ThincloudAPI.getInstance().spec(new TCAPIFuture() {
+APISpec apiSpec = ThincloudAPI.getInstance().getSpec();
+if(apiSpec != null){
+    ThincloudResponse<User> handler = new ThincloudResponse<User>() {
         @Override
-        public boolean complete(APISpec spec) {
-            spec.getSelf().enqueue(new Callback<User>() {
-                @Override
-                public void onResponse(Call<User> call, Response<User> response) {
+        public void handle(Call<User> call, Response<User> response, Throwable error) {
+            if(error != null){
+            	//Failed to get user, an error was thrown
+            } else {
+                if(response.code() >= 400){
+                    //Failed to get user, bad response
+                } else {
+                    //Got user object, response.body()
                 }
-
-                @Override
-                public void onFailure(Call<User> call, Throwable t) {
-                }
-            });
-            return true; // Return true means this command is safe to exit
+            }
         }
-
-        @Override
-        public boolean completeExceptionally(Throwable e){
-        	// Failed to generate API spec.
-            return true; // Return true means this command is safe to exit
-        }
-    });
-} catch(ThincloudException e){
-	// An error occured
+    };
+    new ThincloudRequest<User>().create(apiSpec.getSelf(), handler);
+} else {
+    //Failed due to unavailable APISpec
 }
 ```
 
