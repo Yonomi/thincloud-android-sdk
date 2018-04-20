@@ -4,6 +4,12 @@
     <string name="username">Username</string>
     <string name="password">Password</string>
     <string name="btn_login">Login</string>
+    <string name="btn_createCmd">Create Command</string>
+    <string name="user_id">User ID</string>
+    <string name="command">Command</string>
+    <string name="name_label">Name: </string>
+    <string name="command_id_label">CommandID: </string>
+    <string name="loading">loading...</string>
     <string-array name="env_array">
         <item>Dev</item>
         <item>Test</item>

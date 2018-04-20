@@ -9,10 +9,16 @@ import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import co.yonomi.thincloud.tcsdk.ThincloudConfig;
 import co.yonomi.thincloud.tcsdk.ThincloudSDK;
@@ -24,6 +30,7 @@ import co.yonomi.thincloud.tcsdk.thincloud.ThincloudRequest;
 import co.yonomi.thincloud.tcsdk.thincloud.ThincloudResponse;
 import co.yonomi.thincloud.tcsdk.thincloud.exceptions.ThincloudException;
 import co.yonomi.thincloud.tcsdk.thincloud.models.Command;
+import co.yonomi.thincloud.tcsdk.thincloud.models.Device;
 import co.yonomi.thincloud.tcsdk.thincloud.models.User;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -44,6 +51,13 @@ public class MainActivity extends AppCompatActivity {
         final EditText textUsername = findViewById(R.id.username);
         final EditText textPassword = findViewById(R.id.password);
         final Button buttonLogin = findViewById(R.id.button_login);
+        final Button buttonCreateCmd = findViewById(R.id.button_create_command);
+        final ListView commandList = findViewById(R.id.command_list);
+        final TextView textUserId = findViewById(R.id.user_id);
+
+        final CommandListAdapter commandListAdapter = new CommandListAdapter(this, new ArrayList<>());
+
+        commandList.setAdapter(commandListAdapter);
 
 
         textUsername.setText(appConfig.get("thincloud.defaultTestUser", ""));
@@ -62,10 +76,57 @@ public class MainActivity extends AppCompatActivity {
                 Command response = command.respond();
                 response.state("completed");
                 onEventProcessed(response);
+
+                commandListAdapter.addCommand(response);
             }
         };
 
+
         ThincloudSDK.setHandler(commandHandler);
+
+        buttonCreateCmd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                APISpec apiSpec = ThincloudAPI.getInstance().getSpec();
+                if(apiSpec != null){
+                    new ThincloudRequest<List<Device>>().createWithoutAuth(apiSpec.getDevices(), new ThincloudResponse<List<Device>>() {
+                        @Override
+                        public void handle(Call<List<Device>> call, Response<List<Device>> response, Throwable error) {
+                            if(error == null){
+                                if(response.body() != null){
+                                    if(response.body().size() > 0){
+                                        Device device = response.body().get(0);
+                                        Command command = new Command()
+                                                .name("turn_on");
+
+                                        new ThincloudRequest<Command>().create(apiSpec.createCommand(device.deviceId(), command), new ThincloudResponse<Command>() {
+                                            @Override
+                                            public void handle(Call<Command> call, Response<Command> response, Throwable error) {
+                                                if(error == null){
+                                                    if(response.code() == 201){
+                                                        Toast.makeText(MainActivity.this, "Created command", Toast.LENGTH_SHORT).show();
+                                                    } else {
+                                                        Log.e(TAG, "Failed to create command");
+                                                    }
+                                                } else {
+                                                    Log.e(TAG, "Failed to create command", error);
+                                                }
+                                            }
+                                        });
+                                    }
+                                } else {
+                                    Log.e(TAG, "Device response was null");
+                                }
+                            } else {
+                                Log.e(TAG, "Failed to get devices", error);
+                            }
+                        }
+                    });
+                } else {
+                    Log.e(TAG, "Failed to get API spec for create command");
+                }
+            }
+        });
 
         buttonLogin.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -111,6 +172,7 @@ public class MainActivity extends AppCompatActivity {
                                             Log.e(TAG, "Failed to get user");
                                         } else {
                                             Log.i(TAG, "Got user " + response.body().userId());
+                                            textUserId.setText(response.body().userId());
                                             Toast.makeText(MainActivity.this, "User authenticated", Toast.LENGTH_SHORT).show();
                                         }
                                     }

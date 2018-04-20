@@ -90,6 +90,13 @@ public interface APISpec {
     Call<Device> createDevice(@Body Device device);
 
     /**
+     * Get list of user's devices {@link Device}
+     * @return
+     */
+    @GET("/v1/devices")
+    Call<List<Device>> getDevices();
+
+    /**
      * Update a {@link Device} by {@link Device#deviceId}
      * @param deviceId
      * @param device
@@ -121,6 +128,15 @@ public interface APISpec {
      */
     @GET("/v1/devices/{deviceId}/commands?state=pending")
     Call<List<Command>> getCommands(@Path("deviceId") String deviceId);
+
+    /**
+     * Create an async command for deviceId
+     * @param deviceId
+     * @param command
+     * @return
+     */
+    @POST("/v1/devices/{deviceId}/commands?async=true")
+    Call<Command> createCommand(@Path("deviceId") String deviceId, @Body Command command);
 
     /**
      * Update a {@link Command} by a {@link Command#commandId}
