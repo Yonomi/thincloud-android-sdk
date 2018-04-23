@@ -24,11 +24,18 @@ Setting up your IDE:
 
 There are four primary components to be concerned with:
 
-1. [ThincloudConfig](#thincloudconfig)
-2. [ThincloudSDK](#thincloudSDK)
-3. [CommandQueue](#commandQueue)
-4. [ThincloudAPI](#thincloudAPI)
+1. [Firebase Setup](#firebase-setup)
+2. [ThincloudConfig](#thincloudconfig)
+3. [ThincloudSDK](#thincloudSDK)
+4. [CommandQueue](#commandQueue)
+5. [ThincloudAPI](#thincloudAPI)
 
+
+### Firebase Setup
+
+In order to make use of Firebase Cloud Messaging, a `google-services.json` file must be placed in the root directory of your project. For example with the demo app provided it would be located in `./app/google-services.json`.
+
+Instructions to acquire the `google-services.json` file can be [found here](https://support.google.com/firebase/answer/7015592?hl=en).
 
 
 ### ThincloudConfig
