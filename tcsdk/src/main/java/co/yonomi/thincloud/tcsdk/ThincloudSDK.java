@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import com.firebase.jobdispatcher.GooglePlayDriver;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -55,6 +56,14 @@ public class ThincloudSDK {
     }
 
     /**
+     * Grab the Google Play Driver
+     * @return
+     */
+    public static GooglePlayDriver getGooglePlayDriver(){
+        return _instance.googlePlayDriver;
+    }
+
+    /**
      * Attempt to initialize the SDK
      * @param context Android application context used for initializing Firebase
      * @param config ThincloudConfig object
@@ -66,6 +75,7 @@ public class ThincloudSDK {
             throw new ThincloudException("Failed to initialize. Configuration invalid.");
         if(_instance == null) {
             _instance = new ThincloudSDK();
+            _instance.googlePlayDriver = new GooglePlayDriver(context);
             FirebaseApp.initializeApp(context);
             FirebaseMessaging.getInstance().subscribeToTopic(config.fcmTopic());
         }
@@ -84,6 +94,9 @@ public class ThincloudSDK {
     public static boolean isInitialized(){
         return _instance != null;
     }
+
+
+    private GooglePlayDriver googlePlayDriver;
 
     private ThincloudSDK(){}
 

@@ -1,7 +1,6 @@
 package co.yonomi.thincloud.tcsdktestplatform;
 
 import android.content.Context;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -9,13 +8,15 @@ import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +25,6 @@ import co.yonomi.thincloud.tcsdk.ThincloudConfig;
 import co.yonomi.thincloud.tcsdk.ThincloudSDK;
 import co.yonomi.thincloud.tcsdk.cq.CommandHandler;
 import co.yonomi.thincloud.tcsdk.thincloud.APISpec;
-import co.yonomi.thincloud.tcsdk.thincloud.TCAPIFuture;
 import co.yonomi.thincloud.tcsdk.thincloud.ThincloudAPI;
 import co.yonomi.thincloud.tcsdk.thincloud.ThincloudRequest;
 import co.yonomi.thincloud.tcsdk.thincloud.ThincloudResponse;
@@ -33,7 +33,6 @@ import co.yonomi.thincloud.tcsdk.thincloud.models.Command;
 import co.yonomi.thincloud.tcsdk.thincloud.models.Device;
 import co.yonomi.thincloud.tcsdk.thincloud.models.User;
 import retrofit2.Call;
-import retrofit2.Callback;
 import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
@@ -44,6 +43,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        final Gson gson = new Gson();
 
         final Configurator appConfig = Configurator.initWithContext(this);
 
@@ -71,9 +72,26 @@ public class MainActivity extends AppCompatActivity {
         final CommandHandler commandHandler = new CommandHandler() {
             @Override
             public void onEventReceived(Command command) {
-                Log.i("ICommandHandler", "Received command: " + command.commandId());
                 Toast.makeText(MainActivity.this, "Processing command: " + command.commandId(), Toast.LENGTH_SHORT).show();
+                Log.i("ICommandHandler", "Handling command: " + command.commandId());
+
+                switch(command.name()){
+                    case "get_state":
+                        break;
+                    case "set_state":
+                        break;
+
+                    case "delta_state":
+                        break;
+                }
+
                 Command response = command.respond();
+                JsonObject customObject = new JsonObject();
+                customObject.addProperty("foo", "bar");
+                response.response(
+                        new Command.Response()
+                            .result(customObject)
+                );
                 response.state("completed");
                 onEventProcessed(response);
 
@@ -97,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
                                     if(response.body().size() > 0){
                                         Device device = response.body().get(0);
                                         Command command = new Command()
-                                                .name("turn_on");
+                                                .name("get_state");
 
                                         new ThincloudRequest<Command>().create(apiSpec.createCommand(device.deviceId(), command), new ThincloudResponse<Command>() {
                                             @Override

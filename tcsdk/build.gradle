@@ -1,5 +1,4 @@
 plugins {
-//    id 'io.franzbecker.gradle-lombok' version '1.11'
     id 'com.android.library'
 }
 
@@ -36,33 +35,23 @@ dependencies {
     compileOnly 'org.projectlombok:lombok:1.16.20'
     annotationProcessor 'org.projectlombok:lombok:1.16.20'
     api 'com.google.code.gson:gson:2.8.2'
-    api 'com.google.firebase:firebase-core:15.0.0'
-    api 'com.google.firebase:firebase-messaging:15.0.0'
+    api 'com.google.firebase:firebase-core:15.0.2'
+    api 'com.google.firebase:firebase-messaging:15.0.2'
     api 'com.firebase:firebase-jobdispatcher:0.8.5'
     api 'com.squareup.retrofit2:retrofit:2.4.0'
     api 'com.squareup.retrofit2:converter-gson:2.4.0'
     api 'net.sourceforge.streamsupport:android-retrofuture:1.6.1'
 }
 
-//lombok {
-//    sha256 = ""
-//}
-//import io.franzbecker.gradle.lombok.task.DelombokTask
-//
-//
-//task delombok(type: DelombokTask) {
-//    ext.outputDir = file("$buildDir/delombok")
-//    outputs.dir(outputDir)
-//    android.sourceSets.main.java.srcDirs.each {
-//        inputs.dir(it)
-//        args(it, "-d", outputDir)
-//    }
-//}
+task delombok(type: Exec) {
+    commandLine './delombok.js'
+}
 
 task javadoc(type: Javadoc) {
-    source = android.sourceSets.main.java.srcDirs
-//    source = delombok.outputDir
+    delete("../docs")
+    dependsOn delombok
+    source = file("../delomboked/")
     classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
-    destinationDir = file("./javadoc/")
+    destinationDir = file("../docs/")
     failOnError false
 }

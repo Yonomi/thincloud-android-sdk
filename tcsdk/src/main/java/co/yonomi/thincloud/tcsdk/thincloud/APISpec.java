@@ -10,6 +10,7 @@ import co.yonomi.thincloud.tcsdk.thincloud.models.Command;
 import co.yonomi.thincloud.tcsdk.thincloud.models.Device;
 import co.yonomi.thincloud.tcsdk.thincloud.models.DeviceResponse;
 import co.yonomi.thincloud.tcsdk.thincloud.models.RefreshTokenRequest;
+import co.yonomi.thincloud.tcsdk.thincloud.models.ResetPassword;
 import co.yonomi.thincloud.tcsdk.thincloud.models.TokenRequest;
 import co.yonomi.thincloud.tcsdk.thincloud.models.User;
 import co.yonomi.thincloud.tcsdk.thincloud.models.VerifyUser;
@@ -48,9 +49,19 @@ public interface APISpec {
 
     //region User
 
+    /**
+     * Create a user
+     * @param user
+     * @return
+     */
     @POST("/v1/users")
     Call<User> createUser(@Body User user);
 
+    /**
+     * Verify user
+     * @param verifyUser
+     * @return
+     */
     @POST("/v1/users/verification")
     Call<BaseResponse> verifyUser(@Body VerifyUser verifyUser);
 
@@ -68,6 +79,44 @@ public interface APISpec {
      */
     @GET("/v1/users/{userId}")
     Call<User> getUser(@Path("userId") String userId);
+
+
+    /**
+     * Request password reset for user. Called without authentication.
+     * Only needs the following parameters:
+     * - {@link ResetPassword#username}
+     * - {@link ResetPassword#clientId}
+     *
+     * @param resetPassword
+     * @return
+     */
+    @POST("/v1/users/reset_password")
+    Call<BaseResponse> resetPassword(@Body ResetPassword resetPassword);
+
+
+    /**
+     * Verify reset password.
+     * Only needs the following parameters:
+     * - {@link ResetPassword#username}
+     * - {@link ResetPassword#password}
+     * - {@link ResetPassword#confirmationCode}
+     *
+     * @param resetPassword
+     * @return
+     */
+    @POST("/v1/users/reset_password/verification")
+    Call<BaseResponse> verifyResetPassword(@Body ResetPassword resetPassword);
+
+
+    /**
+     * Update a user
+     * @param userId
+     * @param user
+     * @return
+     */
+    @PUT("/v1/users/{userId}")
+    Call<User> updateUser(@Path("userId") String userId, @Body User user);
+
 
     //endregion
 

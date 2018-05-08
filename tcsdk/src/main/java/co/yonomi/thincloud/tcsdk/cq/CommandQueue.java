@@ -99,6 +99,7 @@ public class CommandQueue {
                         } else {
                             List<Command> rawCommands = response.body();
                             if(rawCommands != null) {
+                                Log.i(TAG, "Got commands, dispatching");
                                 List<Command> commands = filterCommandsByState(rawCommands, "pending");
                                 if(handler instanceof CommandListHandler) {
                                     acknowledgeCommands(commands, new AndThenDo() {
@@ -120,6 +121,8 @@ public class CommandQueue {
                                 }
                                 else
                                     Log.e(TAG, "Failed to handle command, unexpected handler implementation.");
+                            } else {
+                                Log.e(TAG, "Null commands, something went wrong");
                             }
                             jobService.jobFinished(jobParameters, false);
                         }
@@ -187,7 +190,7 @@ public class CommandQueue {
                         if(response.code() >= 400){
                             Log.e(TAG, "Failed to handle command, bad response code");
                         } else {
-                            Log.i(TAG, "Command updated successfully");
+                            Log.i(TAG, "Command updated successfully: " + command.commandId());
                         }
                     }
                 }

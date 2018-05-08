@@ -18,6 +18,7 @@ import lombok.experimental.Accessors;
 public class User extends BaseResponse {
     private String email = null;
     @SerializedName("fullName") private String name = null;
+    private String password = null;
     private String firstName = null;
     private String lastName = null;
     private Boolean active = null;

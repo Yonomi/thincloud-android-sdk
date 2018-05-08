@@ -21,8 +21,8 @@ public class Command extends BaseResponse {
     private String userId;
     private String state;
 
-    private JsonObject request;
-    private JsonObject response;
+    private Request request;
+    private Response response;
     private Integer responseStatusCode;
 
 
@@ -39,5 +39,21 @@ public class Command extends BaseResponse {
                 .state(state())
                 .response(response())
                 .responseStatusCode(responseStatusCode());
+    }
+
+    @Data
+    @Accessors(fluent = true)
+    @EqualsAndHashCode(callSuper = false)
+    public static class Request {
+        private String name;
+        private JsonObject data;
+    }
+
+    @Data
+    @Accessors(fluent = true)
+    @EqualsAndHashCode(callSuper = false)
+    public static class Response {
+        private JsonObject result;
+        private JsonObject error;
     }
 }

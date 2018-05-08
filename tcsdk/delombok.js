@@ -1,0 +1,1 @@
+java -jar ../libs/lombok.jar delombok src/main/java -d ../delomboked

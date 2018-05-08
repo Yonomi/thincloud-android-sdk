@@ -4,17 +4,15 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.firebase.jobdispatcher.FirebaseJobDispatcher;
-import com.firebase.jobdispatcher.GooglePlayDriver;
 import com.firebase.jobdispatcher.Job;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import com.google.gson.Gson;
 
-import static com.firebase.jobdispatcher.FirebaseJobDispatcher.SCHEDULE_RESULT_BAD_SERVICE;
-import static com.firebase.jobdispatcher.FirebaseJobDispatcher.SCHEDULE_RESULT_NO_DRIVER_AVAILABLE;
-import static com.firebase.jobdispatcher.FirebaseJobDispatcher.SCHEDULE_RESULT_SUCCESS;
-import static com.firebase.jobdispatcher.FirebaseJobDispatcher.SCHEDULE_RESULT_UNKNOWN_ERROR;
-import static com.firebase.jobdispatcher.FirebaseJobDispatcher.SCHEDULE_RESULT_UNSUPPORTED_TRIGGER;
+import java.util.UUID;
+
+import co.yonomi.thincloud.tcsdk.ThincloudSDK;
+
 
 /**
  * Created by mike on 4/4/18.
@@ -33,19 +31,24 @@ public class TCFirebaseMessagingService extends FirebaseMessagingService {
     }
 
     private void scheduleJob(RemoteMessage remoteMessage){
-        FirebaseJobDispatcher jobDispatcher = new FirebaseJobDispatcher(new GooglePlayDriver(this));
-        Bundle bundle = new Bundle();
-//        bundle.putParcelable("remoteMessage", remoteMessage);
-        bundle.putSerializable("msgPayload", gson.toJson(remoteMessage.getData()));
-        Job job = jobDispatcher.newJobBuilder()
-                .setService(TCCommandJobService.class)
-                .setTag("TCJob_" + remoteMessage.getMessageId())
-                .setExtras(bundle)
-                .build();
-        try{
-            jobDispatcher.mustSchedule(job);
-        } catch(FirebaseJobDispatcher.ScheduleFailedException e){
-            Log.e(TAG, "Failed to schedule job", e);
+        if(ThincloudSDK.isInitialized()) {
+            FirebaseJobDispatcher jobDispatcher = new FirebaseJobDispatcher(ThincloudSDK.getGooglePlayDriver());
+            Bundle bundle = new Bundle();
+            bundle.putSerializable("msgPayload", gson.toJson(remoteMessage.getData()));
+            Job job = jobDispatcher.newJobBuilder()
+                    .setService(TCCommandJobService.class)
+                    .setTag("TCJob_" + UUID.randomUUID())
+                    .setExtras(bundle)
+                    .build();
+
+            try {
+                Log.i(TAG, "Scheduling job " + job.getTag());
+                jobDispatcher.mustSchedule(job);
+            } catch (FirebaseJobDispatcher.ScheduleFailedException e) {
+                Log.e(TAG, "Failed to schedule job", e);
+            }
+        } else {
+            Log.e(TAG, "Failed to schedule job, ThincloudSDK not initialized");
         }
     }
 }

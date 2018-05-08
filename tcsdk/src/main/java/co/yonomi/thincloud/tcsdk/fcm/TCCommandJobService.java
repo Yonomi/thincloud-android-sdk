@@ -21,6 +21,7 @@ public class TCCommandJobService extends JobService {
         Log.i(TAG, "Got remote message");
         try {
             CommandQueue.getInstance().handleCommand(this, jobParameters);
+            Log.i(TAG, "Handled remote message");
         }
         catch(ThincloudException e){
             Log.e(TAG, "Failed to handle remote message.", e);

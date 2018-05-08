@@ -5,6 +5,7 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.util.Calendar;
+import java.util.concurrent.TimeUnit;
 
 import co.yonomi.thincloud.tcsdk.ThincloudConfig;
 import co.yonomi.thincloud.tcsdk.thincloud.exceptions.ThincloudAuthError;
@@ -234,6 +235,8 @@ public class ThincloudAPI {
      */
     private void init(){
         OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
+        clientBuilder.connectTimeout(5L, TimeUnit.SECONDS);
+        clientBuilder.readTimeout(30L, TimeUnit.SECONDS);
         clientBuilder.addInterceptor(new Interceptor() {
             @Override
             public okhttp3.Response intercept(Chain chain) throws IOException {
