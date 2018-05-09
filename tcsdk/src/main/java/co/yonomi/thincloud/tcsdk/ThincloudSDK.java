@@ -84,6 +84,7 @@ public class ThincloudSDK {
                 .setSharedPreferences(sharedPreferences)
                 .setConfig(config);
         getInstance().reportToken(FirebaseInstanceId.getInstance().getToken());
+        CommandQueue.getInstance().setUseJobScheduler(config.useJobScheduler());
         return _instance;
     }
 

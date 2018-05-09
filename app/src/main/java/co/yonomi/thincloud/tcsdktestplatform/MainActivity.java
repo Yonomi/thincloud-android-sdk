@@ -32,6 +32,7 @@ import co.yonomi.thincloud.tcsdk.thincloud.exceptions.ThincloudException;
 import co.yonomi.thincloud.tcsdk.thincloud.models.Command;
 import co.yonomi.thincloud.tcsdk.thincloud.models.Device;
 import co.yonomi.thincloud.tcsdk.thincloud.models.User;
+import co.yonomi.thincloud.tcsdktestplatform.example.lights.models.State;
 import retrofit2.Call;
 import retrofit2.Response;
 
@@ -75,23 +76,44 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "Processing command: " + command.commandId(), Toast.LENGTH_SHORT).show();
                 Log.i("ICommandHandler", "Handling command: " + command.commandId());
 
+                Command response = command.respond();
+
+//                JsonObject customObject = new JsonObject();
+//                customObject.addProperty("foo", "bar");
+//                response.response(
+//                        new Command.Response()
+//                                .result(customObject)
+//                );
+
+                Log.i(TAG, "Command: " + gson.toJson(command));
+
                 switch(command.name()){
                     case "get_state":
+                        State gotState = new State();
+                        gotState
+                                .power(true)
+                                .brightness(50)
+                                .saturation(50)
+                                .hue(0);
+                        response.response(
+                                new Command.Response()
+                                    .result((JsonObject)gson.toJsonTree(gotState))
+                        );
                         break;
-                    case "set_state":
+                    case "update_state":
+                        State updateState = gson.fromJson(command.request(), State.class);
+                        response.response(
+                                new Command.Response()
+                                    .result((JsonObject)gson.toJsonTree(updateState))
+                        );
                         break;
 
                     case "delta_state":
                         break;
                 }
 
-                Command response = command.respond();
-                JsonObject customObject = new JsonObject();
-                customObject.addProperty("foo", "bar");
-                response.response(
-                        new Command.Response()
-                            .result(customObject)
-                );
+
+
                 response.state("completed");
                 onEventProcessed(response);
 

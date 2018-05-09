@@ -38,6 +38,8 @@ public class CommandQueue {
 
     private GenericCommandHandler handler;
 
+    private boolean useJobScheduler = false;
+
     private CommandQueue(){ }
 
     /**
@@ -46,6 +48,14 @@ public class CommandQueue {
      */
     public void setHandler(GenericCommandHandler _handler){
         handler = _handler;
+    }
+
+    public void setUseJobScheduler(boolean bool){
+        useJobScheduler = bool;
+    }
+
+    public boolean getUseJobScheduler(){
+        return useJobScheduler;
     }
 
     /**
@@ -67,23 +77,15 @@ public class CommandQueue {
 
     /**
      * Handle a command from firebase JobService
-     * @param jobService
-     * @param jobParameters
+     * @param messageData
+     * @param andThenDo
      * @throws ThincloudException
      */
-    public void handleCommand(final JobService jobService, final JobParameters jobParameters) throws ThincloudException {
+    public void handleCommand(final Map<String,String> messageData, final AndThenDo andThenDo) throws ThincloudException {
         if(handler == null) {
             throw new ThincloudException("Handler not defined");
         }
         else{
-            final Map<String,String> messageData;
-            try{
-                messageData = gson.fromJson((String)jobParameters.getExtras().getSerializable("msgPayload"), Map.class);
-            } catch(NullPointerException e){
-                Log.e(TAG, "Failed to parse payload", e);
-                throw new ThincloudException("Failed to parse payload");
-            }
-
             final String deviceId = messageData.get("deviceId");
             if(deviceId == null)
                 throw new ThincloudException("Cannot resolve commands for a null deviceId");
@@ -95,7 +97,8 @@ public class CommandQueue {
                     public void handle(Call<List<Command>> call, Response<List<Command>> response, Throwable error) {
                         if(error != null){
                             Log.e(TAG, "Failed to fetch commands", error);
-                            jobService.jobFinished(jobParameters, false);
+                            if(andThenDo != null)
+                                andThenDo.something();
                         } else {
                             List<Command> rawCommands = response.body();
                             if(rawCommands != null) {
@@ -124,7 +127,8 @@ public class CommandQueue {
                             } else {
                                 Log.e(TAG, "Null commands, something went wrong");
                             }
-                            jobService.jobFinished(jobParameters, false);
+                            if(andThenDo != null)
+                                andThenDo.something();
                         }
                     }
                 };

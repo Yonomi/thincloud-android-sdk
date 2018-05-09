@@ -18,6 +18,7 @@ public class ThincloudConfig {
     private String apiKey = null;
     private String fcmTopic = null;
     private String clientId = null;
+    private boolean useJobScheduler = false;
 
     /**
      * Validate this configuration

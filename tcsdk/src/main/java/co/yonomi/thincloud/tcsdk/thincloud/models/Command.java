@@ -21,7 +21,7 @@ public class Command extends BaseResponse {
     private String userId;
     private String state;
 
-    private Request request;
+    private JsonObject request;
     private Response response;
     private Integer responseStatusCode;
 
