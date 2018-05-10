@@ -102,8 +102,8 @@ public class CommandQueue {
                         } else {
                             List<Command> rawCommands = response.body();
                             if(rawCommands != null) {
-                                Log.i(TAG, "Got commands, dispatching");
                                 List<Command> commands = filterCommandsByState(rawCommands, "pending");
+                                Log.i(TAG, "Got " + commands.size() + " commands, dispatching");
                                 if(handler instanceof CommandListHandler) {
                                     acknowledgeCommands(commands, new AndThenDo() {
                                         @Override

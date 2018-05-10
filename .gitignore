@@ -66,4 +66,7 @@ fastlane/readme.md
 
 # Mac Stuff
 .DS_Store
+
+# Lombok + Docs
 delomboked/
+docs/

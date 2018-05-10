@@ -8,9 +8,9 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 @EqualsAndHashCode
 public class State {
-    private boolean power;
-    private int hue;
-    private int saturation;
-    private int brightness;
-    private int temperature;
+    private Boolean power;
+    private Integer hue;
+    private Integer saturation;
+    private Integer brightness;
+    private Integer temperature;
 }

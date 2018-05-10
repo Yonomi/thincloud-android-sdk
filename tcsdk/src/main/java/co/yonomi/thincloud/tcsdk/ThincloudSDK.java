@@ -96,7 +96,6 @@ public class ThincloudSDK {
         return _instance != null;
     }
 
-
     private GooglePlayDriver googlePlayDriver;
 
     private ThincloudSDK(){}
