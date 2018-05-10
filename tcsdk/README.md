@@ -98,6 +98,12 @@ A GenericCommandHandler implementation to process a list of commands.
 
 An API initializer and manager singleton. Receives a configuration object when the SDK is initialized. Uses [Retrofit](retrofit) behind the scenes for easy API management. Wraps all authentication handling to make interacting with the API easy. When run in an Android App, all API interaction should be called asynchronously to prevent network on the main thread.
 
+| Method | Arguments | Usage |
+| ---- | ---- | ---- |
+| logout | | Attempts to remove previously registered client and invalidate cache. |
+| getSpec | | Grabs the API spec. May not be initialized |
+| getClientId | | Grabs the cached clientId |
+
 
 #### ThincloudRequest\<T>
 
@@ -146,7 +152,7 @@ if(apiSpec != null){
 
 ## Javadocs
 
-Javadocs can be found [here](./javadoc/).
+Javadocs can be found [here](../docs/).
 
 
 
