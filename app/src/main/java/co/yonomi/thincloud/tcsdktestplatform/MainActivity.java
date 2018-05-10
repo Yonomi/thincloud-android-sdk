@@ -54,8 +54,10 @@ public class MainActivity extends AppCompatActivity {
         final EditText textPassword = findViewById(R.id.password);
         final Button buttonLogin = findViewById(R.id.button_login);
         final Button buttonCreateCmd = findViewById(R.id.button_create_command);
+        final Button buttonLogout = findViewById(R.id.button_logout);
         final ListView commandList = findViewById(R.id.command_list);
         final TextView textUserId = findViewById(R.id.user_id);
+        final TextView textClientId = findViewById(R.id.client_id);
 
         final CommandListAdapter commandListAdapter = new CommandListAdapter(this, new ArrayList<>());
 
@@ -192,13 +194,11 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     try {
                         if(!ThincloudSDK.isInitialized()) {
-                            ThincloudSDK
-                                    .initialize(getApplicationContext(), config);
-
-                            Log.i(TAG, "SDK initialized");
+                            Log.i(TAG, "SDK is not initialized");
                         } else {
-                            Log.i(TAG, "SDK already initialized");
+                            Log.i(TAG, "SDK has been previously initialized");
                         }
+                        ThincloudSDK.initialize(getApplicationContext(), config);
                         APISpec apiSpec = ThincloudAPI.getInstance().getSpec();
                         if(apiSpec != null){
                             ThincloudResponse<User> handler = new ThincloudResponse<User>() {
@@ -213,6 +213,11 @@ public class MainActivity extends AppCompatActivity {
                                         } else {
                                             Log.i(TAG, "Got user " + response.body().userId());
                                             textUserId.setText(response.body().userId());
+                                            try {
+                                                textClientId.setText(ThincloudAPI.getInstance().getClientId());
+                                            } catch(ThincloudException e){
+                                                Log.e(TAG, "Failed to get client id post login", e);
+                                            }
                                             Toast.makeText(MainActivity.this, "User authenticated", Toast.LENGTH_SHORT).show();
                                         }
                                     }
@@ -226,6 +231,19 @@ public class MainActivity extends AppCompatActivity {
                         Log.e(TAG, "Failed to initialize SDK", e);
                         Toast.makeText(MainActivity.this, "SDK Init Failed", Toast.LENGTH_SHORT).show();
                     }
+                }
+            }
+        });
+
+        buttonLogout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    ThincloudAPI.getInstance().logout();
+                    Toast.makeText(MainActivity.this, "Logout Successful", Toast.LENGTH_SHORT).show();
+                } catch(ThincloudException e){
+                    Log.e(TAG, "Failed to logout", e);
+                    Toast.makeText(MainActivity.this, "Logout Failed", Toast.LENGTH_SHORT).show();
                 }
             }
         });

@@ -5,7 +5,9 @@
     <string name="password">Password</string>
     <string name="btn_login">Login</string>
     <string name="btn_createCmd">Create Command</string>
+    <string name="btn_logout">Logout</string>
     <string name="user_id">User ID</string>
+    <string name="client_id">Client ID</string>
     <string name="command">Command</string>
     <string name="name_label">Name: </string>
     <string name="command_id_label">CommandID: </string>
