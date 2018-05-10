@@ -17,8 +17,10 @@ import co.yonomi.thincloud.tcsdk.thincloud.ThincloudAPI;
 import co.yonomi.thincloud.tcsdk.thincloud.ThincloudRequest;
 import co.yonomi.thincloud.tcsdk.thincloud.ThincloudResponse;
 import co.yonomi.thincloud.tcsdk.thincloud.exceptions.ThincloudException;
+import co.yonomi.thincloud.tcsdk.thincloud.models.BaseResponse;
 import co.yonomi.thincloud.tcsdk.thincloud.models.Client;
 import co.yonomi.thincloud.tcsdk.thincloud.models.ClientRegistration;
+import co.yonomi.thincloud.tcsdk.util.AndThenDo;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -79,9 +81,9 @@ public class ThincloudSDK {
             FirebaseApp.initializeApp(context);
             FirebaseMessaging.getInstance().subscribeToTopic(config.fcmTopic());
         }
-        SharedPreferences sharedPreferences = context.getApplicationContext().getSharedPreferences(SHARED_PREF_FILE, Context.MODE_PRIVATE);
+        getInstance().sharedPreferences = context.getApplicationContext().getSharedPreferences(SHARED_PREF_FILE, Context.MODE_PRIVATE);
         ThincloudAPI.getInstance()
-                .setSharedPreferences(sharedPreferences)
+                .setSharedPreferences(getInstance().sharedPreferences)
                 .setConfig(config);
         getInstance().reportToken(FirebaseInstanceId.getInstance().getToken());
         CommandQueue.getInstance().setUseJobScheduler(config.useJobScheduler());
@@ -98,11 +100,15 @@ public class ThincloudSDK {
 
     private GooglePlayDriver googlePlayDriver;
 
+    private SharedPreferences sharedPreferences;
+
     private ThincloudSDK(){}
 
     /**
-     * Attempt to register client token for push notifications,
-     * do not call this method manually
+     * Attempt to delete existing client, register client token,
+     * do not call this method manually!
+     *
+     * Used for push notification routing.
      * @param token
      */
     public void reportToken(final String token){
@@ -113,17 +119,51 @@ public class ThincloudSDK {
                     .applicationName(config.appName())
                     .applicationVersion(config.appVersion())
                     .deviceToken(token);
-            ThincloudResponse<Client> responseHandler = new ThincloudResponse<Client>() {
+            ThincloudResponse<Client> createResponse = new ThincloudResponse<Client>() {
                 @Override
                 public void handle(Call<Client> call, Response<Client> response, Throwable error) {
                     if(error != null)
                         Log.e(TAG, "Client registration failed", error);
                     else {
                         Log.i(TAG, "Client registered with token " + token);
+
+                        if(response.body() != null && sharedPreferences != null) {
+                            sharedPreferences.edit()
+                                    .putString("clientId", response.body().clientId())
+                                    .apply();
+                            Log.i(TAG, "Cached clientId " + response.body().clientId());
+                        }
                     }
                 }
             };
-            new ThincloudRequest<Client>().create(apiSpec.registerClient(clientRegistration), responseHandler);
+            AndThenDo createClient = new AndThenDo() {
+                @Override
+                public void something() {
+                    new ThincloudRequest<Client>().create(apiSpec.registerClient(clientRegistration), createResponse);
+                }
+            };
+            if(sharedPreferences != null && sharedPreferences.contains("clientId")) {
+                ThincloudResponse<BaseResponse> deleteResponse = new ThincloudResponse<BaseResponse>() {
+                    @Override
+                    public void handle(Call<BaseResponse> call, Response<BaseResponse> response, Throwable error) {
+                        if (error != null) {
+                            Log.e(TAG, "Client deletion failed", error);
+                        } else {
+                            if (response.code() == 204) {
+                                Log.i(TAG, "Deleted client successfully");
+                            } else {
+                                Log.e(TAG, "Failed to delete client: " + response.code());
+                            }
+                        }
+                        createClient.something();
+                    }
+                };
+                new ThincloudRequest<BaseResponse>().create(
+                        apiSpec.deleteClient(sharedPreferences.getString("clientId", "")),
+                        deleteResponse
+                );
+            } else createClient.something();
+
         } else {
             Log.e(TAG, "Failed to report token, API not initialized.");
         }

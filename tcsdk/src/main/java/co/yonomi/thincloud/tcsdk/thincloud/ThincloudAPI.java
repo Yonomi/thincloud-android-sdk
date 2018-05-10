@@ -11,8 +11,10 @@ import co.yonomi.thincloud.tcsdk.ThincloudConfig;
 import co.yonomi.thincloud.tcsdk.thincloud.exceptions.ThincloudAuthError;
 import co.yonomi.thincloud.tcsdk.thincloud.exceptions.ThincloudException;
 import co.yonomi.thincloud.tcsdk.thincloud.models.AccessToken;
+import co.yonomi.thincloud.tcsdk.thincloud.models.BaseResponse;
 import co.yonomi.thincloud.tcsdk.thincloud.models.RefreshTokenRequest;
 import co.yonomi.thincloud.tcsdk.thincloud.models.TokenRequest;
+import co.yonomi.thincloud.tcsdk.util.AndThenDo;
 import java9.util.concurrent.CompletableFuture;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -93,6 +95,20 @@ public class ThincloudAPI {
     }
 
     /**
+     * Attempt to clear stored cached information
+     */
+    private void tryDeleteCachedData(){
+        if(sharedPreferences != null){
+            sharedPreferences.edit()
+                    .remove("username")
+                    .remove("refreshToken")
+                    .remove("expiresAt")
+                    .apply();
+            Log.i(TAG, "Deleted cached data");
+        } else Log.e(TAG, "Failed to delete cached data, sharedPreferences does not exist.");
+    }
+
+    /**
      * Determine if we have a refresh token
      * @return true iff we have a refresh token, else false
      */
@@ -143,6 +159,55 @@ public class ThincloudAPI {
                     .putString("refreshToken", accessToken.refresh())
                     .putLong("expiresAt", expiresAt.getTimeInMillis())
                     .apply();
+        }
+    }
+
+    /**
+     * Attempt to logout, deregistering client and clearing cache
+     * @throws ThincloudException
+     */
+    public void logout() throws ThincloudException{
+        invalidateCache();
+    }
+
+    /**
+     * Attempt to grab cached clientId if present
+     * @return
+     * @throws ThincloudException if clientId is not present in sharedPreferences
+     */
+    public String getClientId() throws ThincloudException{
+        if(sharedPreferences != null){
+            String clientId = sharedPreferences.getString("clientId", null);
+            if(clientId == null)
+                throw new ThincloudException("ClientId does not exist");
+            else return clientId;
+        } else throw new ThincloudException("Cannot get clientId, sharedPreferences is null");
+    }
+
+    /**
+     * Attempt to delete all token caches and delete client
+     */
+    private void invalidateCache() throws ThincloudException{
+        if(spec == null)
+            throw new ThincloudException("Failed to invalidate cache, spec not initialized.");
+        try{
+            ThincloudResponse<BaseResponse> deleteResposne = new ThincloudResponse<BaseResponse>() {
+                @Override
+                public void handle(Call<BaseResponse> call, Response<BaseResponse> response, Throwable error) {
+                    if(error != null){
+                        Log.e(TAG, "Failed to delete client", error);
+                    } else if(response.code() != 204)
+                        Log.e(TAG, "Failed to delete client, error code: " + response.code());
+                    else
+                        Log.i(TAG, "Client deleted successfully");
+                    tryDeleteCachedData();
+                }
+            };
+            new ThincloudRequest<BaseResponse>().create(spec.deleteClient(getClientId()), deleteResposne);
+        } catch(ThincloudException e){
+            Log.e(TAG, "Failed to delete client for invalidateCache", e);
+            tryDeleteCachedData();
+            throw e;
         }
     }
 

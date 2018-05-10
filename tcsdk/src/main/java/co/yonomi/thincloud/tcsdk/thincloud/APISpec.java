@@ -16,6 +16,7 @@ import co.yonomi.thincloud.tcsdk.thincloud.models.User;
 import co.yonomi.thincloud.tcsdk.thincloud.models.VerifyUser;
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
@@ -165,6 +166,14 @@ public interface APISpec {
      */
     @POST("/v1/clients")
     Call<Client> registerClient(@Body ClientRegistration registration);
+
+    /**
+     * Delete a {@link Client} using a ClientId
+     * @param clientId
+     * @return
+     */
+    @DELETE("/v1/clients/{clientId}")
+    Call<BaseResponse> deleteClient(@Path("clientId") String clientId);
 
     //endregion
 
