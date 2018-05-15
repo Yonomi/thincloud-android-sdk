@@ -79,20 +79,13 @@ public class MainActivity extends AppCompatActivity {
                 Log.i("ICommandHandler", "Handling command: " + command.commandId());
 
                 Command response = command.respond();
-
-//                JsonObject customObject = new JsonObject();
-//                customObject.addProperty("foo", "bar");
-//                response.response(
-//                        new Command.Response()
-//                                .result(customObject)
-//                );
-
                 Log.i(TAG, "Command: " + gson.toJson(command));
 
                 switch(command.name()){
                     case "get_state":
                         State gotState = new State();
                         gotState
+                                .name("my light")
                                 .power(true)
                                 .brightness(50)
                                 .saturation(50)

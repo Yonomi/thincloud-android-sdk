@@ -13,4 +13,9 @@ public class State {
     private Integer saturation;
     private Integer brightness;
     private Integer temperature;
+
+    // Metadata commonly used by integrations
+    private String name;
+    private String firmwareVersion;
+    private String manufacturerInfo;
 }
