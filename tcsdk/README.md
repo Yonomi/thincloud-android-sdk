@@ -13,9 +13,9 @@ This SDK is used for interacting with Thincloud v1 as well as providing a Virtua
 
 Setting up your IDE:
 
-1. Download [Android Studio](androidStudio)
-2. [Install Lombok Plugin](lombokForJetbrains)
-3. [Enable Annotation Processing](annotationProcessing)
+1. Download [Android Studio][androidStudio]
+2. [Install Lombok Plugin][lombokForJetbrains]
+3. [Enable Annotation Processing][annotationProcessing]
 4. Open Project
 
 
@@ -40,7 +40,7 @@ Instructions to acquire the `google-services.json` file can be [found here](http
 
 ### ThincloudConfig
 
-A configuration POJO including the following properties. Uses [Lombok](lombokLib) with `@Data` and `@Accessors(fluent = true)` for interacting with POJO. See [@Data](lombokData) and [@Accessors](lombokAccessor) for more information.
+A configuration POJO including the following properties. Uses [Lombok][lombokLib] with `@Data` and `@Accessors(fluent = true)` for interacting with POJO. See [@Data][lombokData] and [@Accessors][lombokAccessor] for more information.
 
 
 |	Type	|	Variable	|	Usage	|
@@ -96,7 +96,7 @@ A GenericCommandHandler implementation to process a list of commands.
 
 ### ThincloudAPI
 
-An API initializer and manager singleton. Receives a configuration object when the SDK is initialized. Uses [Retrofit](retrofit) behind the scenes for easy API management. Wraps all authentication handling to make interacting with the API easy. When run in an Android App, all API interaction should be called asynchronously to prevent network on the main thread.
+An API initializer and manager singleton. Receives a configuration object when the SDK is initialized. Uses [Retrofit][retrofit] behind the scenes for easy API management. Wraps all authentication handling to make interacting with the API easy. When run in an Android App, all API interaction should be called asynchronously to prevent network on the main thread.
 
 | Method | Arguments | Usage |
 | ---- | ---- | ---- |
