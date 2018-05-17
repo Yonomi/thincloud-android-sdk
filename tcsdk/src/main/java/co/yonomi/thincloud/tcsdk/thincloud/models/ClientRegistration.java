@@ -19,7 +19,7 @@ import lombok.experimental.Accessors;
 public class ClientRegistration extends BaseResponse {
     private String applicationName;
     private String applicationVersion;
-    private final String installId = Settings.Secure.ANDROID_ID;
+    private String installId;
     private final String devicePlatform = "android";
     private final String deviceModel = getDeviceName();
     private final String deviceVersion = String.valueOf(Build.VERSION.SDK_INT);

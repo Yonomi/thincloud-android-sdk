@@ -2,6 +2,7 @@ package co.yonomi.thincloud.tcsdk;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.provider.Settings;
 import android.util.Log;
 
 import com.firebase.jobdispatcher.GooglePlayDriver;
@@ -81,6 +82,7 @@ public class ThincloudSDK {
             FirebaseApp.initializeApp(context);
             FirebaseMessaging.getInstance().subscribeToTopic(config.fcmTopic());
         }
+        getInstance().deviceId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
         getInstance().sharedPreferences = context.getApplicationContext().getSharedPreferences(SHARED_PREF_FILE, Context.MODE_PRIVATE);
         ThincloudAPI.getInstance()
                 .setSharedPreferences(getInstance().sharedPreferences)
@@ -102,6 +104,8 @@ public class ThincloudSDK {
 
     private SharedPreferences sharedPreferences;
 
+    private String deviceId;
+
     private ThincloudSDK(){}
 
     /**
@@ -118,6 +122,7 @@ public class ThincloudSDK {
             ClientRegistration clientRegistration = new ClientRegistration()
                     .applicationName(config.appName())
                     .applicationVersion(config.appVersion())
+                    .installId(deviceId)
                     .deviceToken(token);
             ThincloudResponse<Client> createResponse = new ThincloudResponse<Client>() {
                 @Override
