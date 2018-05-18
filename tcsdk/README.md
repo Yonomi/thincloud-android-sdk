@@ -43,18 +43,17 @@ Instructions to acquire the `google-services.json` file can be [found here](http
 A configuration POJO including the following properties. Uses [Lombok][lombokLib] with `@Data` and `@Accessors(fluent = true)` for interacting with POJO. See [@Data][lombokData] and [@Accessors][lombokAccessor] for more information.
 
 
-|	Type	|	Variable	|	Usage	|
-| ------- | ---------- | ------- |
-| String | username | Thincloud Username |
-| String | password | Thincloud Password |
-| String | environment | Environment, used for API URL generation |
-| String | company | Company name, used for API URL generation |
-| String | appName | Name of the implementing application |
-| String | appVersion | Version of the implementing application | 
-| String | apiKey | Thincloud API Key |
-| String | fcmTopic | Firebase Topic |
-| String | clientId | oAuth Client ID |
-| boolean | useJobScheduler | Default `false`, can be turned on to have Android manage background jobs |
+|	Type	|	Variable	|	Usage	| Required |
+| ------- | ---------- | ------- | ------- |
+| String | username | Thincloud Username. | For authenticated requests. |
+| String | password | Thincloud Password | For authenticated requests |
+| String | instanceName | Instance name, used for API URL generation | Yes |
+| String | appName | Name of the implementing application | Yes |
+| String | appVersion | Version of the implementing application | Yes | 
+| String | apiKey | Thincloud API Key | Yes |
+| String | fcmTopic | Firebase Topic | Yes |
+| String | clientId | oAuth Client ID | Yes |
+| boolean | useJobScheduler | Default `false`, can be turned on to have Android manage background jobs | No |
 
 
 ### ThincloudSDK
