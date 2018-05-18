@@ -26,9 +26,9 @@ There are four primary components to be concerned with:
 
 1. [Firebase Setup](#firebase-setup)
 2. [ThincloudConfig](#thincloudconfig)
-3. [ThincloudSDK](#thincloudSDK)
-4. [CommandQueue](#commandQueue)
-5. [ThincloudAPI](#thincloudAPI)
+3. [ThincloudSDK](#thincloudsdk)
+4. [CommandQueue](#commandqueue)
+5. [ThincloudAPI](#thincloudapi)
 
 
 ### Firebase Setup
