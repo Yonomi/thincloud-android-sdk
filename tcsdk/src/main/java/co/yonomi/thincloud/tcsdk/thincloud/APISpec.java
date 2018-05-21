@@ -74,6 +74,14 @@ public interface APISpec {
     Call<User> getSelf();
 
     /**
+     * Update current logged in user
+     * @param user
+     * @return
+     */
+    @PUT("/v1/users/@me")
+    Call<User> updateSelf(@Body User user);
+
+    /**
      * Get a {@link User} by {@link User#userId}
      * @param userId
      * @return
