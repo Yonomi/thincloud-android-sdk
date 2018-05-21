@@ -45,8 +45,6 @@ A configuration POJO including the following properties. Uses [Lombok][lombokLib
 
 |	Type	|	Variable	|	Usage	| Required |
 | ------- | ---------- | ------- | ------- |
-| String | username | Thincloud Username. | For authenticated requests. |
-| String | password | Thincloud Password | For authenticated requests |
 | String | instanceName | Instance name, used for API URL generation | Yes |
 | String | appName | Name of the implementing application | Yes |
 | String | appVersion | Version of the implementing application | Yes | 
@@ -65,7 +63,9 @@ Primary singleton interface for dealing with Thincloud. Ideally, this is all tha
 | ---- | ---- | ----- | ---- |
 | ThincloudSDK | *initialize* | Context, ThincloudConfig | Initializes the ThincloudSDK and ThincloudAPI. <br>*Requires Android Context to configure Firebase.* |
 | void | *setHandler* | CommandHandler | Provides an event handler to be called for each command that is sent. |
-| boolean | *isInitialized* |  | Determines if the SDK has been initialized y et |
+| boolean | *isInitialized* |  | Determines if the SDK has been initialized yet. |
+| void | login | String username, String password, TCFuture\<Boolean\> callback | Attempt to login using username and password. |
+| void | logout | | Attempts to remove previously registered client and invalidate cache. |
 
 
 ### CommandQueue
@@ -97,11 +97,13 @@ A GenericCommandHandler implementation to process a list of commands.
 
 An API initializer and manager singleton. Receives a configuration object when the SDK is initialized. Uses [Retrofit][retrofit] behind the scenes for easy API management. Wraps all authentication handling to make interacting with the API easy. When run in an Android App, all API interaction should be called asynchronously to prevent network on the main thread.
 
-| Method | Arguments | Usage |
-| ---- | ---- | ---- |
-| logout | | Attempts to remove previously registered client and invalidate cache. |
-| getSpec | | Grabs the API spec. May not be initialized |
-| getClientId | | Grabs the cached clientId |
+| Return Type | Method | Arguments | Usage |
+| ---- | ---- | ---- | ---- |
+| void | login | String username, String password, TCFuture\<Boolean\> callback | Attempts to login and register a client. |
+| void | logout | | Attempts to remove previously registered client and invalidate cache. |
+| APISpec | getSpec | | Grabs the API spec. May not be initialized. |
+| String | getClientId | | Grabs the cached clientId. |
+| boolean| hasRefreshToken | | Checks to see if API has a refresh token set. |
 
 
 #### ThincloudRequest\<T>
@@ -111,8 +113,8 @@ An API wrapper that passes all results to a single handler.
 | Method | Arguments | Usage |
 | ---- | ---- | --- |
 | new ThincloudRequest\<T> | | Initialize a new ThincloudRequest object |
-| create | Call\<T>, ThincloudResponse\<T> | Create a new request, checking auth state first |
-| createWithoutAuth | Call\<T>, ThincloudResponse\<T> | Create a new request, ignoring auth state |
+| create | Call\<T>, ThincloudResponse\<T> | Create a new request using with stored tokens. |
+| createWithoutAuth | Call\<T>, ThincloudResponse\<T> | Create a new request without attempting to authenticate first. |
 
 #### ThincloudResponse\<T>
 

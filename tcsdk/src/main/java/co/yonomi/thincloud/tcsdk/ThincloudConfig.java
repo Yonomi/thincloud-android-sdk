@@ -10,8 +10,6 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(fluent = true)
 public class ThincloudConfig {
-    private String username = null;
-    private String password = null;
     private String instanceName = null;
     private String appName = null;
     private String appVersion = null;
@@ -32,14 +30,5 @@ public class ThincloudConfig {
                 instanceName != null &&
                 fcmTopic != null &&
                 clientId != null;
-    }
-
-
-    /**
-     * Validate whether user credentials are present
-     * @return
-     */
-    public boolean hasUserCredentials(){
-        return username != null && password != null;
     }
 }

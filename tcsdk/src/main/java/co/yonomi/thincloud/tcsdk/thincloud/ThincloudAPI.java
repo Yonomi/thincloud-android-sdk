@@ -14,13 +14,10 @@ import co.yonomi.thincloud.tcsdk.thincloud.models.AccessToken;
 import co.yonomi.thincloud.tcsdk.thincloud.models.BaseResponse;
 import co.yonomi.thincloud.tcsdk.thincloud.models.RefreshTokenRequest;
 import co.yonomi.thincloud.tcsdk.thincloud.models.TokenRequest;
-import co.yonomi.thincloud.tcsdk.util.AndThenDo;
-import java9.util.concurrent.CompletableFuture;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import retrofit2.Call;
-import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -104,6 +101,9 @@ public class ThincloudAPI {
                     .remove("refreshToken")
                     .remove("expiresAt")
                     .apply();
+            accessToken = null;
+            cachedUsername = null;
+            expiresAt = null;
             Log.i(TAG, "Deleted cached data");
         } else Log.e(TAG, "Failed to delete cached data, sharedPreferences does not exist.");
     }
@@ -112,7 +112,7 @@ public class ThincloudAPI {
      * Determine if we have a refresh token
      * @return true iff we have a refresh token, else false
      */
-    private boolean hasRefreshToken(){
+    public boolean hasRefreshToken(){
         return (accessToken != null && accessToken.refresh() != null);
     }
 
@@ -150,16 +150,35 @@ public class ThincloudAPI {
         accessToken = _token;
         expiresAt = Calendar.getInstance();
         expiresAt.add(Calendar.SECOND, accessToken.expires());
-        String username = cachedUsername;
-        if(username == null)
-            username = config.username();
         if(sharedPreferences != null) {
             sharedPreferences.edit()
-                    .putString("username", username)
+                    .putString("username", cachedUsername)
                     .putString("refreshToken", accessToken.refresh())
                     .putLong("expiresAt", expiresAt.getTimeInMillis())
                     .apply();
         }
+    }
+
+    /**
+     * Attempt to login using username and password
+     * @param username
+     * @param password
+     * @param callback
+     * @throws ThincloudException
+     */
+    public void login(final String username, final String password, final TCFuture<Boolean> callback) throws ThincloudException {
+        TCFuture<AccessToken> gotTokens = new TCFuture<AccessToken>(){
+            @Override
+            public boolean complete(AccessToken token) {
+                return callback.complete(true);
+            }
+
+            @Override
+            public boolean completeExceptionally(Throwable e){
+                return callback.completeExceptionally(e);
+            }
+        };
+        authenticate(gotTokens, username, password);
     }
 
     /**
@@ -212,16 +231,6 @@ public class ThincloudAPI {
     }
 
     /**
-     * Determine if we have user credentials
-     * @return
-     */
-    private boolean hasUserCredentials(){
-        if(config == null)
-            return false;
-        return config.hasUserCredentials();
-    }
-
-    /**
      * Generate baseUrl using configuration
      * @return String the baseUrl generated using provided configuration
      */
@@ -230,14 +239,28 @@ public class ThincloudAPI {
     }
 
     /**
+     * Login without provided username and password
+     * @param callback
+     * @throws ThincloudException
+     */
+    private void authenticate(final TCFuture<AccessToken> callback) throws ThincloudException{
+        authenticate(callback, null, null);
+    }
+
+    /**
      * Attempt to authenticate using provided credentials
      * @param callback will trigger .complete iff success, else completeExceptionally
      * @throws ThincloudException
      */
-    private void authenticate(final CompletableFuture<AccessToken> callback) throws ThincloudException{
+    private void authenticate(final TCFuture<AccessToken> callback, final String username, final String password) throws ThincloudException{
         if(spec == null)
             throw new ThincloudException("Failed to authenticate, spec not initialized");
         tryLoadCachedData();
+
+        boolean authUsingUserCredentials = false;
+
+        if(username != null && password != null)
+            authUsingUserCredentials = true;
 
         final AccessToken previousAccessToken = getAccessToken();
         ThincloudResponse<AccessToken> handler = new ThincloudResponse<AccessToken>() {
@@ -253,6 +276,8 @@ public class ThincloudAPI {
                         if(updatedAccessToken != null) {
                             if (previousAccessToken != null && previousAccessToken.refresh() != null)
                                 updatedAccessToken.refresh(previousAccessToken.refresh());
+                            if(username != null)
+                                cachedUsername = username;
                             setAccessToken(updatedAccessToken);
                             callback.complete(response.body());
                         } else {
@@ -267,21 +292,21 @@ public class ThincloudAPI {
 
         if(hasRefreshToken()){
             Log.i(TAG, "Authenticating using refresh token.");
-            String refreshUsername = cachedUsername;
-            if(cachedUsername == null && config.username() != null)
-                refreshUsername = config.username();
+            if(cachedUsername == null){
+                throw new ThincloudAuthError("Cannot use cached credentials, username missing.");
+            }
 
             RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest()
-                    .username(refreshUsername)
+                    .username(cachedUsername)
                     .clientId(config.clientId())
                     .refreshToken(accessToken.refresh());
             call = spec.refreshToken(refreshTokenRequest);
         }
-        else if(hasUserCredentials()) {
+        else if(authUsingUserCredentials) {
             Log.i(TAG, "Authenticating using username and password.");
             TokenRequest tokenRequest = new TokenRequest()
-                    .username(config.username())
-                    .password(config.password())
+                    .username(username)
+                    .password(password)
                     .clientId(config.clientId());
 
             call = spec.getTokens(tokenRequest);
@@ -337,7 +362,7 @@ public class ThincloudAPI {
     protected void getAuthenticatedScope(final TCAPIFuture callback) throws ThincloudException{
         if(spec == null)
             throw new ThincloudException("Configuration missing, API not setup");
-        CompletableFuture<AccessToken> gotTokens = new CompletableFuture<AccessToken>(){
+        TCFuture<AccessToken> gotTokens = new TCFuture<AccessToken>(){
             @Override
             public boolean complete(AccessToken token) {
                 return callback.complete(spec);
@@ -348,8 +373,9 @@ public class ThincloudAPI {
                 return callback.completeExceptionally(e);
             }
         };
+        tryLoadCachedData();
         if(accessToken == null) {
-            authenticate(gotTokens);
+            throw new ThincloudAuthError("Cannot get authenticated scope, user not logged in.");
         } else {
             Calendar now = Calendar.getInstance();
             if(now.compareTo(expiresAt) > 0 || accessToken.access() == null) {

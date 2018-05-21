@@ -14,6 +14,7 @@ import co.yonomi.thincloud.tcsdk.cq.CommandHandler;
 import co.yonomi.thincloud.tcsdk.cq.CommandQueue;
 import co.yonomi.thincloud.tcsdk.thincloud.APISpec;
 import co.yonomi.thincloud.tcsdk.thincloud.TCAPIFuture;
+import co.yonomi.thincloud.tcsdk.thincloud.TCFuture;
 import co.yonomi.thincloud.tcsdk.thincloud.ThincloudAPI;
 import co.yonomi.thincloud.tcsdk.thincloud.ThincloudRequest;
 import co.yonomi.thincloud.tcsdk.thincloud.ThincloudResponse;
@@ -22,6 +23,7 @@ import co.yonomi.thincloud.tcsdk.thincloud.models.BaseResponse;
 import co.yonomi.thincloud.tcsdk.thincloud.models.Client;
 import co.yonomi.thincloud.tcsdk.thincloud.models.ClientRegistration;
 import co.yonomi.thincloud.tcsdk.util.AndThenDo;
+import java9.util.concurrent.CompletableFuture;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -87,9 +89,59 @@ public class ThincloudSDK {
         ThincloudAPI.getInstance()
                 .setSharedPreferences(getInstance().sharedPreferences)
                 .setConfig(config);
-        getInstance().reportToken(FirebaseInstanceId.getInstance().getToken());
         CommandQueue.getInstance().setUseJobScheduler(config.useJobScheduler());
+
+
+        if(ThincloudAPI.getInstance().hasRefreshToken())
+            tryReportToken();
+
         return _instance;
+    }
+
+    /**
+     * Attempt to login and register client
+     * @param username
+     * @param password
+     * @param callback
+     * @throws ThincloudException
+     */
+    public static void login(final String username, final String password, final CompletableFuture<Boolean> callback) throws ThincloudException{
+        if(_instance == null){
+            throw new ThincloudException("SDK not initialized, cannot login");
+        } else {
+            ThincloudAPI.getInstance().login(username, password, new TCFuture<Boolean>(){
+                @Override
+                public boolean complete(Boolean result){
+                    tryReportToken();
+                    callback.complete(result);
+                    return true;
+                }
+
+                @Override
+                public boolean completeExceptionally(Throwable e){
+                    return callback.completeExceptionally(e);
+                }
+            });
+        }
+    }
+
+    /**
+     *
+     * @throws ThincloudException
+     */
+    public static void logout() throws ThincloudException{
+        if(_instance == null){
+            throw new ThincloudException("SDK not initialized, cannot logout");
+        } else {
+            ThincloudAPI.getInstance().logout();
+        }
+    }
+
+    /**
+     * Attempt to report token
+     */
+    private static void tryReportToken(){
+        _instance.reportToken(FirebaseInstanceId.getInstance().getToken());
     }
 
     /**
