@@ -29,10 +29,12 @@ import co.yonomi.thincloud.tcsdk.thincloud.ThincloudAPI;
 import co.yonomi.thincloud.tcsdk.thincloud.ThincloudRequest;
 import co.yonomi.thincloud.tcsdk.thincloud.ThincloudResponse;
 import co.yonomi.thincloud.tcsdk.thincloud.exceptions.ThincloudException;
+import co.yonomi.thincloud.tcsdk.thincloud.models.AccessToken;
 import co.yonomi.thincloud.tcsdk.thincloud.models.Command;
 import co.yonomi.thincloud.tcsdk.thincloud.models.Device;
 import co.yonomi.thincloud.tcsdk.thincloud.models.User;
 import co.yonomi.thincloud.tcsdktestplatform.example.lights.models.State;
+import java9.util.concurrent.CompletableFuture;
 import retrofit2.Call;
 import retrofit2.Response;
 
@@ -71,6 +73,30 @@ public class MainActivity extends AppCompatActivity {
         ArrayAdapter<CharSequence> envArrayAdapter = ArrayAdapter.createFromResource(this, R.array.env_array, android.R.layout.simple_spinner_item);
         envArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         envSelector.setAdapter(envArrayAdapter);
+
+
+        ThincloudConfig config = new ThincloudConfig()
+                .appName(getAppName())
+                .appVersion(getAppVersion())
+                .apiKey(appConfig.get("thincloud.apiKey"))
+                .clientId(appConfig.get("thincloud.clientId"))
+                .instanceName(appConfig.get("thincloud.instanceName"))
+                .fcmTopic(appConfig.get("thincloud.fcmTopic"));
+
+        if(!config.validate())
+            Toast.makeText(MainActivity.this, "Configuration is invalid", Toast.LENGTH_SHORT).show();
+
+        if(!ThincloudSDK.isInitialized()) {
+            Log.i(TAG, "SDK is not initialized");
+        } else {
+            Log.i(TAG, "SDK has been previously initialized");
+        }
+        try {
+            ThincloudSDK.initialize(getApplicationContext(), config);
+        }
+        catch(ThincloudException e){
+            Log.e(TAG, "Failed to initialize SDK", e);
+        }
 
         final CommandHandler commandHandler = new CommandHandler() {
             @Override
@@ -124,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 APISpec apiSpec = ThincloudAPI.getInstance().getSpec();
                 if(apiSpec != null){
-                    new ThincloudRequest<List<Device>>().createWithoutAuth(apiSpec.getDevices(), new ThincloudResponse<List<Device>>() {
+                    new ThincloudRequest<List<Device>>().create(apiSpec.getDevices(), new ThincloudResponse<List<Device>>() {
                         @Override
                         public void handle(Call<List<Device>> call, Response<List<Device>> response, Throwable error) {
                             if(error == null){
@@ -171,29 +197,12 @@ public class MainActivity extends AppCompatActivity {
                 if(getCurrentFocus() != null)
                     inputManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),
                             InputMethodManager.HIDE_NOT_ALWAYS);
-
-                ThincloudConfig config = new ThincloudConfig()
-                        .appName(getAppName())
-                        .appVersion(getAppVersion())
-                        .apiKey(appConfig.get("thincloud.apiKey"))
-                        .clientId(appConfig.get("thincloud.clientId"))
-                        .instanceName(appConfig.get("thincloud.instanceName"))
-                        .fcmTopic(appConfig.get("thincloud.fcmTopic"))
-                        .username(textUsername.getText().toString())
-                        .password(textPassword.getText().toString());
-
-                if(!config.validate()){
-                    Toast.makeText(MainActivity.this, "Configuration is invalid", Toast.LENGTH_SHORT).show();
-                } else {
-                    try {
-                        if(!ThincloudSDK.isInitialized()) {
-                            Log.i(TAG, "SDK is not initialized");
-                        } else {
-                            Log.i(TAG, "SDK has been previously initialized");
-                        }
-                        ThincloudSDK.initialize(getApplicationContext(), config);
-                        APISpec apiSpec = ThincloudAPI.getInstance().getSpec();
-                        if(apiSpec != null){
+                
+                try {
+                    APISpec apiSpec = ThincloudAPI.getInstance().getSpec();
+                    ThincloudSDK.login(textUsername.getText().toString(), textPassword.getText().toString(), new CompletableFuture<Boolean>(){
+                        @Override
+                        public boolean complete(Boolean result) {
                             ThincloudResponse<User> handler = new ThincloudResponse<User>() {
                                 @Override
                                 public void handle(Call<User> call, Response<User> response, Throwable error) {
@@ -217,13 +226,12 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             };
                             new ThincloudRequest<User>().create(apiSpec.getSelf(), handler);
-                        } else {
-                            Log.e(TAG, "Failed to get user, API not initialized.");
+                            return true;
                         }
-                    } catch(ThincloudException e){
-                        Log.e(TAG, "Failed to initialize SDK", e);
-                        Toast.makeText(MainActivity.this, "SDK Init Failed", Toast.LENGTH_SHORT).show();
-                    }
+                    });
+                } catch(ThincloudException e){
+                    Log.e(TAG, "Failed to initialize SDK", e);
+                    Toast.makeText(MainActivity.this, "SDK Init Failed", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -232,7 +240,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 try {
-                    ThincloudAPI.getInstance().logout();
+                    ThincloudSDK.logout();
                     Toast.makeText(MainActivity.this, "Logout Successful", Toast.LENGTH_SHORT).show();
                 } catch(ThincloudException e){
                     Log.e(TAG, "Failed to logout", e);
