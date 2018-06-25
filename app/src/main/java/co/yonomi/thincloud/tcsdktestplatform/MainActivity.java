@@ -228,6 +228,12 @@ public class MainActivity extends AppCompatActivity {
                             new ThincloudRequest<User>().create(apiSpec.getSelf(), handler);
                             return true;
                         }
+
+                        @Override
+                        public boolean completeExceptionally(Throwable e){
+                            Log.e(TAG, "Failed to login", e);
+                            return true;
+                        }
                     });
                 } catch(ThincloudException e){
                     Log.e(TAG, "Failed to initialize SDK", e);

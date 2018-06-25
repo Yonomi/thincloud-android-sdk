@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import co.yonomi.thincloud.tcsdk.ThincloudConfig;
 import co.yonomi.thincloud.tcsdk.thincloud.exceptions.ThincloudAuthError;
 import co.yonomi.thincloud.tcsdk.thincloud.exceptions.ThincloudException;
+import co.yonomi.thincloud.tcsdk.thincloud.exceptions.ThincloudUnauthorizedException;
 import co.yonomi.thincloud.tcsdk.thincloud.models.AccessToken;
 import co.yonomi.thincloud.tcsdk.thincloud.models.BaseResponse;
 import co.yonomi.thincloud.tcsdk.thincloud.models.RefreshTokenRequest;
@@ -270,7 +271,16 @@ public class ThincloudAPI {
                     callback.completeExceptionally(error);
                 } else {
                     if (response.code() >= 400) {
-                        callback.completeExceptionally(new ThincloudAuthError("Bad status"));
+                        ThincloudException exception;
+                        try {
+                            if (response.body().message().contains("NotAuthorizedException"))
+                                exception = new ThincloudUnauthorizedException(response.body().error());
+                            else
+                                exception = new ThincloudAuthError("Bad status: " + response.code());
+                            callback.completeExceptionally(exception);
+                        } catch(Exception e){
+                            callback.completeExceptionally(e);
+                        }
                     } else {
                         AccessToken updatedAccessToken = response.body();
                         if(updatedAccessToken != null) {

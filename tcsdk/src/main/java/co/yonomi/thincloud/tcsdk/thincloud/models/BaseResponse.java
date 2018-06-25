@@ -17,4 +17,5 @@ public class BaseResponse {
     private String description;
     private String createdAt;
     private String updatedAt;
+    private String error;
 }

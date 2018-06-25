@@ -11,7 +11,7 @@ import lombok.experimental.Accessors;
 
 @Data
 @Accessors(fluent = true)
-public class AccessToken {
+public class AccessToken extends BaseResponse{
 
     @SerializedName("access_token") String access;
     @SerializedName("refresh_token") String refresh;
