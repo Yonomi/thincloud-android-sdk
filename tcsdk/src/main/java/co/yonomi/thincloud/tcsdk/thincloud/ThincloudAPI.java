@@ -3,6 +3,8 @@ package co.yonomi.thincloud.tcsdk.thincloud;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import com.google.gson.Gson;
+
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +50,7 @@ public class ThincloudAPI {
     private Calendar expiresAt;
     private String cachedUsername;
     private SharedPreferences sharedPreferences;
+    private Gson gson = new Gson();
 
     private ThincloudAPI(){}
 
@@ -271,16 +274,17 @@ public class ThincloudAPI {
                     callback.completeExceptionally(error);
                 } else {
                     if (response.code() >= 400) {
-                        ThincloudException exception;
+                        Exception exception;
                         try {
-                            if (response.body().message().contains("NotAuthorizedException"))
-                                exception = new ThincloudUnauthorizedException(response.body().error());
+                            BaseResponse errorResponse = gson.fromJson(response.errorBody().charStream(), BaseResponse.class);
+                            if (errorResponse.message().contains("NotAuthorizedException"))
+                                exception = new ThincloudUnauthorizedException(errorResponse.error());
                             else
                                 exception = new ThincloudAuthError("Bad status: " + response.code());
-                            callback.completeExceptionally(exception);
-                        } catch(Exception e){
-                            callback.completeExceptionally(e);
+                        } catch(NullPointerException e){
+                            exception = e;
                         }
+                        callback.completeExceptionally(exception);
                     } else {
                         AccessToken updatedAccessToken = response.body();
                         if(updatedAccessToken != null) {
