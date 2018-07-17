@@ -10,6 +10,7 @@ import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 
 import co.yonomi.thincloud.tcsdk.ThincloudConfig;
+import co.yonomi.thincloud.tcsdk.thincloud.exceptions.ThincloudAccountNotVerifiedException;
 import co.yonomi.thincloud.tcsdk.thincloud.exceptions.ThincloudAuthError;
 import co.yonomi.thincloud.tcsdk.thincloud.exceptions.ThincloudException;
 import co.yonomi.thincloud.tcsdk.thincloud.exceptions.ThincloudUnauthorizedException;
@@ -279,6 +280,8 @@ public class ThincloudAPI {
                             BaseResponse errorResponse = gson.fromJson(response.errorBody().charStream(), BaseResponse.class);
                             if (errorResponse.message().contains("NotAuthorizedException"))
                                 exception = new ThincloudUnauthorizedException(errorResponse.error());
+                            else if(errorResponse.message().contains("UserNotConfirmedException"))
+                                exception = new ThincloudAccountNotVerifiedException(errorResponse.error());
                             else
                                 exception = new ThincloudAuthError("Bad status: " + response.code());
                         } catch(NullPointerException e){
