@@ -20,9 +20,7 @@ public class Command extends BaseResponse {
     private String name;
     private String userId;
     private String state;
-    private String createdAt;
     private String expiresAt;
-    private String updatedAt;
 
     private JsonObject request;
     private Response response;

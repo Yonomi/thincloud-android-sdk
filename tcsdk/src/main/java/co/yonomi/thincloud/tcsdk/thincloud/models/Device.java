@@ -1,5 +1,7 @@
 package co.yonomi.thincloud.tcsdk.thincloud.models;
 
+import com.google.gson.JsonObject;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +27,7 @@ public class Device extends BaseResponse {
     private Boolean isConnected = null;
     private String connectivityUpdateAt = null;
     private String connectivitySessionId = null;
-    private HashMap<String,String> custom = null;
+    private JsonObject custom = null;
 
     public static class Location {
         String type;
