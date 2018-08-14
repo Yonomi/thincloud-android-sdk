@@ -130,6 +130,8 @@ public class MainActivity extends AppCompatActivity {
                         break;
 
                     case "delta_state":
+                        State deltaState = new State().brightness(50).temperature(2500);
+                        response.response(new Command.Response().result((JsonObject)gson.toJsonTree(deltaState)));
                         break;
                 }
 
