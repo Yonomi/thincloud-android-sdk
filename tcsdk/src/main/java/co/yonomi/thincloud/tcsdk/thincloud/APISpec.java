@@ -1,6 +1,7 @@
 package co.yonomi.thincloud.tcsdk.thincloud;
 
 import java.util.List;
+import java.util.Map;
 
 import co.yonomi.thincloud.tcsdk.thincloud.models.AccessToken;
 import co.yonomi.thincloud.tcsdk.thincloud.models.BaseResponse;
@@ -14,6 +15,8 @@ import co.yonomi.thincloud.tcsdk.thincloud.models.ResetPassword;
 import co.yonomi.thincloud.tcsdk.thincloud.models.TokenRequest;
 import co.yonomi.thincloud.tcsdk.thincloud.models.User;
 import co.yonomi.thincloud.tcsdk.thincloud.models.VerifyUser;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
@@ -125,6 +128,31 @@ public interface APISpec {
      */
     @PUT("/v1/users/{userId}")
     Call<User> updateUser(@Path("userId") String userId, @Body User user);
+
+
+    /**
+     * Get the file list for logged in user
+     * @return
+     */
+    @GET("/v1/users/@me/files")
+    Call<List<String>> getSelfFiles();
+
+    /**
+     * Get the specified file stored for logged in user
+     * @param fileName
+     * @return
+     */
+    @GET("/v1/users/@me/files/{fileName}")
+    Call<ResponseBody> getSelfFile(@Path("fileName") String fileName);
+
+    /**
+     * Store the specified file for logged in user
+     * @param fileName
+     * @param body
+     * @return
+     */
+    @PUT("/v1/users/@me/files/{fileName}")
+    Call<BaseResponse> putSelfFile(@Path("fileName") String fileName, @Body RequestBody body);
 
 
     //endregion

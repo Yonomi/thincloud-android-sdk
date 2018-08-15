@@ -102,18 +102,43 @@
                 android:layout_centerInParent="true" />
 
             <Button
-                android:id="@+id/button_create_command"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_toEndOf="@id/dummy_center_guide"
-                android:text="@string/btn_createCmd" />
-
-            <Button
                 android:id="@+id/button_logout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/btn_logout"
+                android:layout_toEndOf="@id/dummy_center_guide"
+                android:text="@string/btn_logout" />
+
+            <Button
+                android:id="@+id/button_create_command"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_createCmd"
+                android:layout_below="@id/button_logout"/>
+
+            <Button
+                android:id="@+id/button_fwrite"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/file_write"
+                android:layout_below="@id/button_create_command"
+                android:layout_toStartOf="@id/dummy_center_guide_1"/>
+
+            <View
+                android:id="@+id/dummy_center_guide_1"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_centerInParent="true" />
+
+
+            <Button
+                android:id="@+id/button_fread"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/file_read"
+                android:layout_toEndOf="@id/dummy_center_guide_1"
                 android:layout_below="@id/button_create_command"/>
+
+
         </RelativeLayout>
 
         <LinearLayout

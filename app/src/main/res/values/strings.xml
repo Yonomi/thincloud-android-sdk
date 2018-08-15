@@ -12,6 +12,8 @@
     <string name="name_label">Name: </string>
     <string name="command_id_label">CommandID: </string>
     <string name="loading">loading...</string>
+    <string name="file_write">File Write</string>
+    <string name="file_read">File Read</string>
     <string-array name="env_array">
         <item>Dev</item>
         <item>Test</item>
