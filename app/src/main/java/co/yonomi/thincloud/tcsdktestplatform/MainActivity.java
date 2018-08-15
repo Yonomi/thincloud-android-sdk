@@ -18,8 +18,14 @@ import android.widget.Toast;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import co.yonomi.thincloud.tcsdk.ThincloudConfig;
 import co.yonomi.thincloud.tcsdk.ThincloudSDK;
@@ -30,11 +36,15 @@ import co.yonomi.thincloud.tcsdk.thincloud.ThincloudRequest;
 import co.yonomi.thincloud.tcsdk.thincloud.ThincloudResponse;
 import co.yonomi.thincloud.tcsdk.thincloud.exceptions.ThincloudException;
 import co.yonomi.thincloud.tcsdk.thincloud.models.AccessToken;
+import co.yonomi.thincloud.tcsdk.thincloud.models.BaseResponse;
 import co.yonomi.thincloud.tcsdk.thincloud.models.Command;
 import co.yonomi.thincloud.tcsdk.thincloud.models.Device;
 import co.yonomi.thincloud.tcsdk.thincloud.models.User;
 import co.yonomi.thincloud.tcsdktestplatform.example.lights.models.State;
 import java9.util.concurrent.CompletableFuture;
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Response;
 
@@ -57,6 +67,8 @@ public class MainActivity extends AppCompatActivity {
         final Button buttonLogin = findViewById(R.id.button_login);
         final Button buttonCreateCmd = findViewById(R.id.button_create_command);
         final Button buttonLogout = findViewById(R.id.button_logout);
+        final Button buttonFWrite = findViewById(R.id.button_fwrite);
+        final Button buttonFRead = findViewById(R.id.button_fread);
         final ListView commandList = findViewById(R.id.command_list);
         final TextView textUserId = findViewById(R.id.user_id);
         final TextView textClientId = findViewById(R.id.client_id);
@@ -253,6 +265,56 @@ public class MainActivity extends AppCompatActivity {
                 } catch(ThincloudException e){
                     Log.e(TAG, "Failed to logout", e);
                     Toast.makeText(MainActivity.this, "Logout Failed", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        buttonFWrite.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                APISpec apiSpec = ThincloudAPI.getInstance().getSpec();
+
+                if(apiSpec != null){
+                    Map<String, String> hashMap = new HashMap<>();
+                    hashMap.put("hello", "world");
+                    RequestBody requestBody = RequestBody.create(MediaType.parse("application/json"), gson.toJson(hashMap));
+                    new ThincloudRequest<BaseResponse>().create(apiSpec.putSelfFile("testFile", requestBody), new ThincloudResponse<BaseResponse>() {
+                        @Override
+                        public void handle(Call<BaseResponse> call, Response<BaseResponse> response, Throwable error) {
+                            if(response.code() == 201)
+                                Log.i(TAG, "Put File: Success");
+                            else
+                                Log.e(TAG, "Put File: Failed");
+                        }
+                    });
+                }
+            }
+        });
+
+        buttonFRead.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                APISpec apiSpec = ThincloudAPI.getInstance().getSpec();
+
+                if(apiSpec != null){
+                    new ThincloudRequest<ResponseBody>().create(apiSpec.getSelfFile("testFile"), new ThincloudResponse<ResponseBody>() {
+                        @Override
+                        public void handle(Call<ResponseBody> call, Response<ResponseBody> response, Throwable error) {
+                            if (error == null) {
+                                if (response.code() == 200)
+                                    try {
+                                        Log.i(TAG, "Got File: " + response.body().string());
+                                    }
+                                    catch(IOException e){
+                                        Log.e(TAG, "Failed to get file: " + e.getMessage());
+                                    }
+                                else
+                                    Log.e(TAG, "Failed to get file: Request error");
+                            } else {
+                                Log.e(TAG, "Failed to get file: " + error.getMessage());
+                            }
+                        }
+                    });
                 }
             }
         });
