@@ -135,7 +135,7 @@ public interface APISpec {
      * @return
      */
     @GET("/v1/users/@me/files")
-    Call<Map<String,String>> getSelfFiles();
+    Call<List<String>> getSelfFiles();
 
     /**
      * Get the specified file stored for logged in user
