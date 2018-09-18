@@ -16,7 +16,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import co.yonomi.thincloud.tcsdk.ThincloudConfig;
 import co.yonomi.thincloud.tcsdk.ThincloudSDK;
@@ -110,12 +113,9 @@ public class MainActivity extends AppCompatActivity {
             Log.e(TAG, "Failed to initialize SDK", e);
         }
 
-        final CommandHandler commandHandler = new CommandHandler() {
+        final ExecCommand execCommand = new ExecCommand() {
             @Override
-            public void onEventReceived(Command command) {
-                Toast.makeText(MainActivity.this, "Processing command: " + command.commandId(), Toast.LENGTH_SHORT).show();
-                Log.i("ICommandHandler", "Handling command: " + command.commandId());
-
+            Command process(Command command) {
                 Command response = command.respond();
                 Log.i(TAG, "Command: " + gson.toJson(command));
 
@@ -130,14 +130,15 @@ public class MainActivity extends AppCompatActivity {
                                 .hue(0);
                         response.response(
                                 new Command.Response()
-                                    .result((JsonObject)gson.toJsonTree(gotState))
+                                        .result((JsonObject)gson.toJsonTree(gotState))
                         );
                         break;
                     case "update_state":
                         State updateState = gson.fromJson(command.request(), State.class);
+                        updateState.brightness(25);
                         response.response(
                                 new Command.Response()
-                                    .result((JsonObject)gson.toJsonTree(updateState))
+                                        .result((JsonObject)gson.toJsonTree(updateState))
                         );
                         break;
 
@@ -145,11 +146,32 @@ public class MainActivity extends AppCompatActivity {
                         State deltaState = new State().brightness(50).temperature(2500);
                         response.response(new Command.Response().result((JsonObject)gson.toJsonTree(deltaState)));
                         break;
+
+                    case "batch_command":
+                        Command[] commands = gson.fromJson(command.request().get("commands"), Command[].class);
+                        for (int i = 0; i < commands.length; i++) {
+                            commands[i] = process(commands[i]);
+                        }
+                        JsonObject result = new JsonObject();
+                        result.add("commands", gson.toJsonTree(commands));
+                        response.response(new Command.Response().result(result));
+                        break;
                 }
 
-
-
                 response.state("completed");
+
+                return response;
+            }
+        };
+
+        final CommandHandler commandHandler = new CommandHandler() {
+            @Override
+            public void onEventReceived(Command command) {
+                Toast.makeText(MainActivity.this, "Processing command: " + command.commandId(), Toast.LENGTH_SHORT).show();
+                Log.i("ICommandHandler", "Handling command: " + command.commandId());
+
+                Command response = execCommand.process(command);
+
                 onEventProcessed(response);
 
                 commandListAdapter.addCommand(response);
@@ -333,5 +355,9 @@ public class MainActivity extends AppCompatActivity {
             Log.e(TAG, "Failed to get app version", e);
             return "VersionNotFound";
         }
+    }
+
+    private abstract class ExecCommand {
+        abstract Command process(Command command);
     }
 }
