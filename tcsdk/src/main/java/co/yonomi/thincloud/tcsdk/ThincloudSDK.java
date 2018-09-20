@@ -22,6 +22,7 @@ import co.yonomi.thincloud.tcsdk.thincloud.exceptions.ThincloudException;
 import co.yonomi.thincloud.tcsdk.thincloud.models.BaseResponse;
 import co.yonomi.thincloud.tcsdk.thincloud.models.Client;
 import co.yonomi.thincloud.tcsdk.thincloud.models.ClientRegistration;
+import co.yonomi.thincloud.tcsdk.thincloud.models.Command;
 import co.yonomi.thincloud.tcsdk.util.AndThenDo;
 import java9.util.concurrent.CompletableFuture;
 import retrofit2.Call;
@@ -90,7 +91,7 @@ public class ThincloudSDK {
                 .setSharedPreferences(getInstance().sharedPreferences)
                 .setConfig(config);
         CommandQueue.getInstance().setUseJobScheduler(config.useJobScheduler());
-
+        CommandQueue.getInstance().setCommandsToIgnore(config.commandsToIgnore());
 
         if(ThincloudAPI.getInstance().hasRefreshToken())
             tryReportToken();

@@ -25,7 +25,9 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -98,6 +100,8 @@ public class MainActivity extends AppCompatActivity {
                 .instanceName(appConfig.get("thincloud.instanceName"))
                 .fcmTopic(appConfig.get("thincloud.fcmTopic"));
 
+        config.commandsToIgnore().add("_update");
+
         if(!config.validate())
             Toast.makeText(MainActivity.this, "Configuration is invalid", Toast.LENGTH_SHORT).show();
 
@@ -119,43 +123,48 @@ public class MainActivity extends AppCompatActivity {
                 Command response = command.respond();
                 Log.i(TAG, "Command: " + gson.toJson(command));
 
-                switch(command.name()){
-                    case "get_state":
-                        State gotState = new State();
-                        gotState
-                                .name("my light")
-                                .power(true)
-                                .brightness(50)
-                                .saturation(50)
-                                .hue(0);
-                        response.response(
-                                new Command.Response()
-                                        .result((JsonObject)gson.toJsonTree(gotState))
-                        );
-                        break;
-                    case "update_state":
-                        State updateState = gson.fromJson(command.request(), State.class);
-                        updateState.brightness(25);
-                        response.response(
-                                new Command.Response()
-                                        .result((JsonObject)gson.toJsonTree(updateState))
-                        );
-                        break;
+                try {
+                    switch (command.name()) {
+                        case "get_state":
+                            State gotState = new State();
+                            gotState
+                                    .name("my light")
+                                    .power(true)
+                                    .brightness(50)
+                                    .saturation(50)
+                                    .hue(0);
+                            response.response(
+                                    new Command.Response()
+                                            .result((JsonObject) gson.toJsonTree(gotState))
+                            );
+                            break;
+                        case "update_state":
+                            State updateState = gson.fromJson(command.request(), State.class);
+                            updateState.brightness(25);
+                            response.response(
+                                    new Command.Response()
+                                            .result((JsonObject) gson.toJsonTree(updateState))
+                            );
+                            break;
 
-                    case "delta_state":
-                        State deltaState = new State().brightness(50).temperature(2500);
-                        response.response(new Command.Response().result((JsonObject)gson.toJsonTree(deltaState)));
-                        break;
+                        case "delta_state":
+                            State deltaState = new State().brightness(50).temperature(2500);
+                            response.response(new Command.Response().result((JsonObject) gson.toJsonTree(deltaState)));
+                            break;
 
-                    case "batch_command":
-                        Command[] commands = gson.fromJson(command.request().get("commands"), Command[].class);
-                        for (int i = 0; i < commands.length; i++) {
-                            commands[i] = process(commands[i]);
-                        }
-                        JsonObject result = new JsonObject();
-                        result.add("commands", gson.toJsonTree(commands));
-                        response.response(new Command.Response().result(result));
-                        break;
+                        case "batch_command":
+                            Command[] commands = gson.fromJson(command.request().get("commands"), Command[].class);
+                            for (int i = 0; i < commands.length; i++) {
+                                commands[i] = process(commands[i]);
+                            }
+                            JsonObject result = new JsonObject();
+                            result.add("commands", gson.toJsonTree(commands));
+                            response.response(new Command.Response().result(result));
+                            break;
+                    }
+                } catch(Exception e){
+                    Log.e(TAG, e.getMessage());
+                    e.printStackTrace();
                 }
 
                 response.state("completed");

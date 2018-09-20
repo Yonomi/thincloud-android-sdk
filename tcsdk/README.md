@@ -52,6 +52,7 @@ A configuration POJO including the following properties. Uses [Lombok][lombokLib
 | String | fcmTopic | Firebase Topic | Yes |
 | String | clientId | oAuth Client ID | Yes |
 | boolean | useJobScheduler | Default `false`, can be turned on to have Android manage background jobs | No |
+| Set\<String\> | commandsToIgnore | Ignores commands by name when pulling down the command list for a device. | No |
 
 
 ### ThincloudSDK

@@ -6,9 +6,13 @@ import com.firebase.jobdispatcher.JobParameters;
 import com.firebase.jobdispatcher.JobService;
 import com.google.gson.Gson;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import co.yonomi.thincloud.tcsdk.thincloud.APISpec;
 import co.yonomi.thincloud.tcsdk.thincloud.ThincloudRequest;
@@ -40,6 +44,8 @@ public class CommandQueue {
 
     private boolean useJobScheduler = false;
 
+    private Set<String> commandsToIgnore = new HashSet<>();
+
     private CommandQueue(){ }
 
     /**
@@ -52,6 +58,10 @@ public class CommandQueue {
 
     public void setUseJobScheduler(boolean bool){
         useJobScheduler = bool;
+    }
+
+    public void setCommandsToIgnore(Set<String> toIgnore) {
+        commandsToIgnore = toIgnore;
     }
 
     public boolean getUseJobScheduler(){
@@ -72,6 +82,24 @@ public class CommandQueue {
 //            if(!command.state().toUpperCase().equals(state))
 //                commands.remove(command);
         }
+        return commands;
+    }
+
+    /**
+     *
+     * @param commands
+     * @param toIgnore
+     * @return
+     */
+    public List<Command> ignoreCommandsByName(List<Command> commands, Set<String> toIgnore) {
+        Iterator<Command> iterator = commands.iterator();
+        List<Command> toRemove = new ArrayList<>();
+        while(iterator.hasNext()){
+            Command command = iterator.next();
+            if(toIgnore.contains(command.name()))
+                toRemove.add(command);
+        }
+        commands.removeAll(toRemove);
         return commands;
     }
 
@@ -102,7 +130,7 @@ public class CommandQueue {
                         } else {
                             List<Command> rawCommands = response.body();
                             if(rawCommands != null) {
-                                List<Command> commands = filterCommandsByState(rawCommands, "pending");
+                                final List<Command> commands = ignoreCommandsByName(rawCommands, commandsToIgnore);
                                 Log.i(TAG, "Got " + commands.size() + " commands, dispatching");
                                 if(handler instanceof CommandListHandler) {
                                     acknowledgeCommands(commands, new AndThenDo() {

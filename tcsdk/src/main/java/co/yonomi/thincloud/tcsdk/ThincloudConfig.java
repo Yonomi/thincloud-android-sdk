@@ -1,5 +1,8 @@
 package co.yonomi.thincloud.tcsdk;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -17,6 +20,7 @@ public class ThincloudConfig {
     private String fcmTopic = null;
     private String clientId = null;
     private boolean useJobScheduler = false;
+    private Set<String> commandsToIgnore = new HashSet<>();
 
     /**
      * Validate this configuration
